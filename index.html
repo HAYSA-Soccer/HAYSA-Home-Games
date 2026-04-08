@@ -1,32 +1,99 @@
-<!DOCTYPE html><html><head><meta charset='UTF-8'><title>HAYSA Home Games</title>
-    <style>
-      body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 1rem; background: #fcfcfc; }
-      .club-message {
-        background: #eef6fb; padding: 1rem; border-left: 4px solid #3498db;
-        border-radius: 8px; max-width: 700px; margin: 2em auto;
-      }
-      .day-box {
-        background: #eafaf1; border-left: 6px solid #27ae60;
-        border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-        max-width: 700px; margin: 2em auto; padding: 1.0em;
-      }
-      h2 { text-align: center; font-size: 1.4em; margin-bottom: 0.5em; }
-      ul { list-style: none; padding: 0; font-size: 1.1em; }
-      li { margin-bottom: 1em; }
-      img.crest { height: 1em; vertical-align: middle; margin: 0 0.3em; }
-      .timestamp { text-align: center; font-size: 0.9em; color: #666; margin-top: 2rem; }
-    </style>
-    </head><body>
-    
-    <div class="club-message">
-      <p>Looking for a quick sideline stop this week? These games are happening right here in Holbrook—bring a chair, grab a coffee, and help make the sidelines feel like home!</p>  <p>If you don't see any games below, it just means that there are none this week!</p>
-    </div>
-    <div class="day-box"><h2>📅 Saturday, Apr 11</h2><ul><li><strong>12:00 PM</strong> – <img src="https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png" class="crest" alt="HAYSA">5/6 Boys (Casavant) vs. QUINCY<img src="https://tse2.mm.bing.net/th/id/OIP.CZdNrzdApKNlAj0QhyKmVAAAAA?pid=Api&P=0&h=180" class="crest" alt="QUINCY"> – <span style='color:#0057a0;'>Holbrook High School</span></li><li><strong>3:00 PM</strong> – <img src="https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png" class="crest" alt="HAYSA">5/6 Girls (Baird-Miller) vs. WHITMAN-HANSON – <span style='color:#0057a0;'>Holbrook High School</span></li><li><strong>4:30 PM</strong> – <img src="https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png" class="crest" alt="HAYSA">7/8 Boys (Mills) vs. RAYNHAM<img src="https://raynhamsoccer.com/wp-content/uploads/2023/02/RAYNHAM-LOGO.png" class="crest" alt="RAYNHAM"> – <span style='color:#0057a0;'>Holbrook High School</span></li></ul></div><p class='timestamp'>Last updated: Wednesday, April 08, 2026 at 07:57 AM EDT</p>
-    <script>
-      window.onload = function() {
-        const height = document.documentElement.scrollHeight;
-        parent.postMessage({ height: height }, "*");
-      };
-    </script>
-    </body></html>
-    
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAYSA Travel Updates</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .haysa-iframe {
+    width: 100%;
+    border: none;
+    height: 1200px;
+  }
+  @media (max-width:768px) { .haysa-iframe { height:1600px; } }
+  @media (max-width:480px) { .haysa-iframe { height:1800px; } }
+
+  .season-message {
+    padding: 1.5em;
+    background: #eaf4fc;
+    border: 1px solid #cce0f5;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    margin: 1.5em;
+    text-align: center;
+  }
+
+  .season-title {
+    text-align:center;
+    font-size:1.8em;
+    font-weight:600;
+    color:#004080;
+    margin-top:2em;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="season-title" class="season-title">
+  🧭 HAYSA Travel Soccer 🧭
+</div>
+
+<div id="season-message" class="season-message" style="display:none;">
+  <p style="margin:0.8em 0; font-size:1.1em; color:#2c3e50;">
+    📅 Travel game updates are posted here during our regular seasons:
+  </p>
+  <p style="margin:0.8em 0; font-size:1.1em; color:#2c3e50;">
+    <strong>Spring (Apr–Jun)</strong> and <strong>Fall (Sep–Nov)</strong>
+  </p>
+  <p style="margin:0.8em 0; font-size:1.1em; color:#2c3e50;">
+    🗺️ Please check back for more details as each season approaches.
+  </p>
+  <p style="margin:0.8em 0; font-size:1.1em; color:#2c3e50;">
+    🌐 Explore the site for more information about our organization.
+  </p>
+  <p style="margin:0.8em 0; font-size:1.1em; color:#2c3e50;">
+    Watch here and on our
+    <a href="https://www.facebook.com/groups/337602742940444" target="_blank" style="color:#2c3e50; text-decoration:underline; font-weight:bold;">Facebook</a>
+    page for year-round league-wide updates.
+  </p>
+</div>
+
+<div id="iframe-wrapper" style="display:none;">
+  <iframe src="travel.html" class="haysa-iframe"></iframe>
+</div>
+
+<script>
+  const today = new Date();
+  const month = today.getMonth(); // 0-based
+  const day = today.getDate();
+
+  // Spring: Apr 1 – Jun 30
+  const inSpring =
+    (month === 3 && day >= 1) || // April
+    (month === 4) ||             // May
+    (month === 5);               // June
+
+  // Fall: Sep 1 – Nov 16
+  const inFall =
+    (month === 8) ||             // September
+    (month === 9) ||             // October
+    (month === 10 && day <= 16); // November 1–16
+
+  if (inSpring || inFall) {
+    document.getElementById("iframe-wrapper").style.display = "block";
+  } else {
+    document.getElementById("season-message").style.display = "block";
+  }
+</script>
+
+</body>
+</html>
