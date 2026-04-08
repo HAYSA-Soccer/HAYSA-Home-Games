@@ -3,7 +3,6 @@ from ics import Calendar
 from datetime import datetime, timedelta
 import ssl
 from collections import defaultdict
-import subprocess
 import pytz
 import re
 
@@ -20,22 +19,25 @@ ssl._create_default_https_context = ssl._create_unverified_context
 calendar_data = requests.get(ical_url).text
 calendar = Calendar(calendar_data)
 
-# --- Field normalization (display only) ---
+# --- Field normalization (display only; does NOT filter) ---
 field_name_map = {
     "H-HST": "Holbrook High School",
+    "Holbrook HS": "Holbrook High School",
+    "Holbrook High School": "Holbrook High School",
+    "143 S Franklin St": "Holbrook High School",
+    "143 South Franklin Street": "Holbrook High School",
     "Sean Joyce Field": "Sean Joyce Field",
     "Sumner Field": "Sean Joyce Field",
     "Holbrook Playground": "Sean Joyce Field",
-    "143 S Franklin St": "Sean Joyce Field",
-    "143 South Franklin Street": "Sean Joyce Field",
-    "H-SJ4": "Sean Joyce Field"
+    "H-SJ4": "Sean Joyce Field",
 }
 
 def normalize_field_name(location):
+    loc = (location or "").strip()
     for alias, name in field_name_map.items():
-        if alias.lower() in (location or "").lower():
+        if alias.lower() in loc.lower():
             return name
-    return (location or "").strip()
+    return loc
 
 # --- Crest Mapping ---
 hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
@@ -64,9 +66,9 @@ opponent_crests = {
     "WEYMOUTH": "https://weymouthsite.sportspilot.com/portals/47/Images/WYS%20Logo_small.jpg",
 }
 
-# --- Travel / Rec detection patterns ---
+# --- Travel / Rec detection patterns (from ICS analysis) ---
 HOLBROOK_TRAVEL_PATTERN = re.compile(r'^\d+\/\d+.*\(.*\)$')
-OPPONENT_PATTERN = re.compile(r'^[A-Z][A-Z ]+$')
+OPPONENT_PATTERN = re.compile(r'^[A-Z][A-Z \-]+$')
 
 def is_holbrook_travel_team(text: str) -> bool:
     return bool(HOLBROOK_TRAVEL_PATTERN.match(text.strip()))
@@ -78,7 +80,7 @@ def is_rec_team(text: str) -> bool:
     t = text.strip()
     return "(" in t and ")" in t and not t[0].isdigit() and not t.isupper()
 
-# --- Date Filtering (this week: Monday–Sunday) ---
+# --- Date Filtering (this week: Monday–Sunday, Eastern) ---
 today = to_eastern(datetime.utcnow())
 this_monday = today - timedelta(days=today.weekday())
 this_sunday = this_monday + timedelta(days=6)
@@ -110,7 +112,7 @@ for event in calendar.events:
     left = left.strip()
     right = right.strip()
 
-    # Travel vs Rec detection
+    # Travel vs Rec detection (ICS-based)
     left_is_holbrook = is_holbrook_travel_team(left)
     right_is_holbrook = is_holbrook_travel_team(right)
     left_is_opponent = is_travel_opponent(left)
@@ -124,10 +126,12 @@ for event in calendar.events:
     if not is_travel:
         continue
 
-    # Determine home/away
+    # Determine home/away from matchup format ONLY
     if separator == "vs.":
+        # "A vs B" → A is home
         is_home = left_is_holbrook
     else:
+        # "A @ B" → B is home
         is_home = right_is_holbrook
 
     # Assign Holbrook team and opponent
@@ -153,7 +157,7 @@ for event in calendar.events:
 
     games_by_day[date_label].append(game)
 
-    # ⭐ FIXED: Only add true home games
+    # Home-only collection for index.html
     if game["is_home"]:
         home_games_by_day[date_label].append(game)
 
@@ -188,7 +192,6 @@ with open("index.html", "w", encoding="utf-8") as f:
     </div>
     """)
 
-    # --- No home games block ---
     if not home_games_by_day:
         f.write("""
         <div class="day-box">
@@ -199,7 +202,7 @@ with open("index.html", "w", encoding="utf-8") as f:
     else:
         for date_label in sorted(
             home_games_by_day.keys(),
-            key=lambda d: datetime.strptime(d + f" {today.year}", "%A, %b %d %Y")
+            key=lambda d: datetime.strptime(d + f" " + str(today.year), "%A, %b %d %Y")
         ):
             f.write(f'<div class="day-box"><h2>📅 {date_label}</h2><ul>')
             for game in sorted(
@@ -258,7 +261,6 @@ with open("travel.html", "w", encoding="utf-8") as f:
     </div>
     """)
 
-    # --- No travel games block ---
     if not games_by_day:
         f.write("""
         <div class="day-box" style="max-width:700px; margin:2em auto; background:#fff3cd; border-left:6px solid #f0ad4e; padding:1.5em; border-radius:12px;">
@@ -270,7 +272,7 @@ with open("travel.html", "w", encoding="utf-8") as f:
     else:
         for date_label in sorted(
             games_by_day.keys(),
-            key=lambda d: datetime.strptime(d + f" {today.year}", "%A, %b %d %Y")
+            key=lambda d: datetime.strptime(d + f" " + str(today.year), "%A, %b %d %Y")
         ):
             day_games = games_by_day[date_label]
             home_games = [g for g in day_games if g["is_home"]]
@@ -290,4 +292,31 @@ with open("travel.html", "w", encoding="utf-8") as f:
                         if game["crest"] else ""
                     )
                     f.write(
-                        f"<li><strong>{game['
+                        f"<li><strong>{game['time']}</strong> – "
+                        f"{crest_html}{game['team']} vs. {game['opponent']}{opponent_crest_html} – "
+                        f"<span style='color:#0057a0;'>{game['normalized_location']}</span></li>"
+                    )
+                f.write("</ul></div>")
+
+            if away_games:
+                f.write('<div class="away-box"><h3>🚐 Away Games</h3><ul>')
+                for game in sorted(
+                    away_games,
+                    key=lambda g: datetime.strptime(g["time"], "%I:%M %p")
+                ):
+                    crest_html = (
+                        f'<img src="{game["crest"]}" class="crest" alt="{game["opponent"]}">'
+                        if game["crest"] else ""
+                    )
+                    f.write(
+                        f"<li><strong>{game['time']}</strong> – "
+                        f"{game['team']} @ {game['opponent']}{crest_html} – "
+                        f"<span style='color:#8e44ad;'>{game['normalized_location']}</span></li>"
+                    )
+                f.write("</ul></div>")
+
+            f.write("</div>")
+
+        timestamp = to_eastern(datetime.utcnow()).strftime("%A, %B %d, %Y at %I:%M %p %Z")
+        f.write(f"<p class='timestamp'>Last updated: {timestamp}</p>")
+        f.write("</body></html>")
