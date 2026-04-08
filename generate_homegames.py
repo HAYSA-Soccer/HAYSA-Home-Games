@@ -152,7 +152,9 @@ for event in calendar.events:
     }
 
     games_by_day[date_label].append(game)
-    if is_home:
+
+    # ⭐ FIXED: Only add true home games
+    if game["is_home"]:
         home_games_by_day[date_label].append(game)
 
 # --- Generate index.html (Home Games Only) ---
@@ -288,10 +290,4 @@ with open("travel.html", "w", encoding="utf-8") as f:
                         if game["crest"] else ""
                     )
                     f.write(
-                        f"<li><strong>{game['time']}</strong> – "
-                        f"{crest_html}{game['team']} vs. {game['opponent']}{opponent_crest_html} – "
-                        f"<span style='color:#0057a0;'>{game['normalized_location']}</span></li>"
-                    )
-                f.write("</ul></div>")
-
-            if
+                        f"<li><strong>{game['
