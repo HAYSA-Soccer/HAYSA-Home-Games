@@ -18,6 +18,10 @@ ical_url = "http://tmsdln.com/19hyx"
 ssl._create_default_https_context = ssl._create_unverified_context
 calendar_data = requests.get(ical_url).text
 calendar = Calendar(calendar_data)
+# --- DEBUG: Dump ICS feed so we can see what GitHub Actions is receiving ---
+with open("ics_dump.txt", "w", encoding="utf-8") as dump:
+    dump.write(calendar_data)
+
 
 # --- Field normalization (display only; does NOT filter) ---
 field_name_map = {
