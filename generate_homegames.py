@@ -5,6 +5,7 @@ import ssl
 from collections import defaultdict
 import pytz
 import re
+import time
 
 # --- Timezone helpers ---
 def to_eastern(dt):
@@ -13,17 +14,32 @@ def to_eastern(dt):
         dt = pytz.utc.localize(dt)
     return dt.astimezone(eastern)
 
-# --- iCal Feed ---
-ical_url = "http://tmsdln.com/19hyx"
+# --- iCal Feed (browser user-agent only, NO cache-busting) ---
 ssl._create_default_https_context = ssl._create_unverified_context
-calendar_data = requests.get(ical_url).text
-calendar = Calendar(calendar_data)
+
+ical_url = "http://tmsdln.com/19hyx"
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+}
+
+response = requests.get(ical_url, headers=headers)
+response.raise_for_status()
+calendar_data = response.text
+
 # --- DEBUG: Dump ICS feed so we can see what GitHub Actions is receiving ---
 with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
 
+calendar = Calendar(calendar_data)
 
-# --- Field normalization (display only; does NOT filter) ---
+
+# --- DEBUG: Dump ICS feed so we can see what GitHub Actions is receiving ---
+with open("ics_dump.txt", "w", encoding="utf-8") as dump:
+    dump.write(calendar_data)
+
+calendar = Calendar(calendar_data)
+
+# --- Field normalization (display only) ---
 field_name_map = {
     "H-HST": "Holbrook High School",
     "Holbrook HS": "Holbrook High School",
@@ -70,8 +86,8 @@ opponent_crests = {
     "WEYMOUTH": "https://weymouthsite.sportspilot.com/portals/47/Images/WYS%20Logo_small.jpg",
 }
 
-# --- Travel / Rec detection patterns (from ICS analysis) ---
-HOLBROOK_TRAVEL_PATTERN = re.compile(r'^\d+\/\d+.*\(.*\)$')
+# --- Travel / Rec detection patterns ---
+HOLBROOK_TRAVEL_PATTERN = re.compile(r'^\d+.*(Boys|Girls).*$')
 OPPONENT_PATTERN = re.compile(r'^[A-Z][A-Z \-]+$')
 
 def is_holbrook_travel_team(text: str) -> bool:
@@ -80,12 +96,8 @@ def is_holbrook_travel_team(text: str) -> bool:
 def is_travel_opponent(text: str) -> bool:
     return bool(OPPONENT_PATTERN.match(text.strip()))
 
-def is_rec_team(text: str) -> bool:
-    t = text.strip()
-    return "(" in t and ")" in t and not t[0].isdigit() and not t.isupper()
-
 # --- Date Filtering (this week: Monday–Sunday, Eastern) ---
-today = to_eastern(datetime.utcnow())
+today = datetime.now(pytz.timezone("US/Eastern"))
 this_monday = today - timedelta(days=today.weekday())
 this_sunday = this_monday + timedelta(days=6)
 
@@ -93,17 +105,22 @@ this_sunday = this_monday + timedelta(days=6)
 games_by_day = defaultdict(list)
 home_games_by_day = defaultdict(list)
 
+
+
 for event in calendar.events:
+    name = event.name or ""
+    if "practice" in name.lower():
+        continue
+
     start = to_eastern(event.begin.datetime)
     if not (this_monday.date() <= start.date() <= this_sunday.date()):
         continue
 
-    name = event.name or ""
     location = event.location or ""
     time_str = start.strftime("%I:%M %p").lstrip("0")
     date_label = start.strftime("%A, %b %d")
 
-    # Determine separator and split
+    # Determine separator
     if "vs." in name:
         separator = "vs."
         left, right = name.split("vs.", 1)
@@ -116,29 +133,29 @@ for event in calendar.events:
     left = left.strip()
     right = right.strip()
 
-    # Travel vs Rec detection (ICS-based)
+    # Travel detection
     left_is_holbrook = is_holbrook_travel_team(left)
     right_is_holbrook = is_holbrook_travel_team(right)
     left_is_opponent = is_travel_opponent(left)
     right_is_opponent = is_travel_opponent(right)
 
+    # Travel game logic
     is_travel = (
         (left_is_holbrook and right_is_opponent) or
-        (right_is_holbrook and left_is_opponent)
+        (right_is_holbrook and left_is_opponent) or
+        (left_is_holbrook and right_is_holbrook)
     )
 
     if not is_travel:
         continue
 
-    # Determine home/away from matchup format ONLY
+    # Determine home/away
     if separator == "vs.":
-        # "A vs B" → A is home
         is_home = left_is_holbrook
     else:
-        # "A @ B" → B is home
         is_home = right_is_holbrook
 
-    # Assign Holbrook team and opponent
+    # Assign Holbrook team + opponent
     if left_is_holbrook:
         hay_team = left
         opponent = right
@@ -161,166 +178,5 @@ for event in calendar.events:
 
     games_by_day[date_label].append(game)
 
-    # Home-only collection for index.html
-    if game["is_home"]:
+    if is_home:
         home_games_by_day[date_label].append(game)
-
-# --- Generate index.html (Home Games Only) ---
-with open("index.html", "w", encoding="utf-8") as f:
-    f.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>HAYSA Home Games</title>")
-    f.write("""
-    <style>
-      body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 1rem; background: #fcfcfc; }
-      .club-message {
-        background: #eef6fb; padding: 1rem; border-left: 4px solid #3498db;
-        border-radius: 8px; max-width: 700px; margin: 2em auto;
-      }
-      .day-box {
-        background: #eafaf1; border-left: 6px solid #27ae60;
-        border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-        max-width: 700px; margin: 2em auto; padding: 1.0em;
-      }
-      h2 { text-align: center; font-size: 1.4em; margin-bottom: 0.5em; }
-      ul { list-style: none; padding: 0; font-size: 1.1em; }
-      li { margin-bottom: 1em; }
-      img.crest { height: 1em; vertical-align: middle; margin: 0 0.3em; }
-      .timestamp { text-align: center; font-size: 0.9em; color: #666; margin-top: 2rem; }
-    </style>
-    </head><body>
-    """)
-
-    f.write("""
-    <div class="club-message">
-      <p>Looking for a quick sideline stop this week? These games are happening right here in Holbrook—bring a chair, grab a coffee, and help make the sidelines feel like home!</p>
-      <p>If you don't see any games below, it just means that there are none this week!</p>
-    </div>
-    """)
-
-    if not home_games_by_day:
-        f.write("""
-        <div class="day-box">
-            <h2>No Home Games This Week</h2>
-            <p style='text-align:center; color:#555;'>Check back soon — the schedule updates automatically.</p>
-        </div>
-        """)
-    else:
-        for date_label in sorted(
-            home_games_by_day.keys(),
-            key=lambda d: datetime.strptime(d + f" " + str(today.year), "%A, %b %d %Y")
-        ):
-            f.write(f'<div class="day-box"><h2>📅 {date_label}</h2><ul>')
-            for game in sorted(
-                home_games_by_day[date_label],
-                key=lambda g: datetime.strptime(g["time"], "%I:%M %p")
-            ):
-                crest_html = f'<img src="{hayasa_crest}" class="crest" alt="HAYSA">'
-                opponent_crest_html = (
-                    f'<img src="{game["crest"]}" class="crest" alt="{game["opponent"]}">'
-                    if game["crest"] else ""
-                )
-                f.write(
-                    f"<li><strong>{game['time']}</strong> – "
-                    f"{crest_html}{game['team']} vs. {game['opponent']}{opponent_crest_html} – "
-                    f"<span style='color:#0057a0;'>{game['normalized_location']}</span></li>"
-                )
-            f.write("</ul></div>")
-
-    timestamp = to_eastern(datetime.utcnow()).strftime("%A, %B %d, %Y at %I:%M %p %Z")
-    f.write(f"<p class='timestamp'>Last updated: {timestamp}</p>")
-    f.write("</body></html>")
-
-# --- Generate travel.html (Full Travel Schedule: Home + Away) ---
-with open("travel.html", "w", encoding="utf-8") as f:
-    f.write("<!DOCTYPE html><html><head><meta charset='UTF-8'><title>HAYSA Travel Schedule</title>")
-    f.write("""
-    <style>
-      body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 1rem; background: #fcfcfc; }
-      .club-message {
-        background: #fef9f4; padding: 1rem; border-left: 4px solid #d35400;
-        border-radius: 8px; max-width: 900px; margin: 2em auto;
-      }
-      .day-container {
-        display: flex; flex-wrap: wrap; gap: 2em; justify-content: center; margin-bottom: 1.5em;
-      }
-      .home-box, .away-box {
-        flex: 1 1 400px; background: #fff; border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.06); padding: 1.5em; max-width: 500px;
-      }
-      .home-box { border-left: 6px solid #27ae60; background: #eafaf1; }
-      .away-box { border-left: 6px solid #c0392b; background: #fef4f0; }
-      h2 { text-align: center; font-size: 1.4em; margin-bottom: 0.5em; }
-      h3 { font-size: 1.2em; margin-bottom: 0.5em; color: #2c3e50; }
-      ul { list-style: none; padding: 0; font-size: 1.05em; }
-      li { margin-bottom: 1em; }
-      img.crest { height: 1em; vertical-align: middle; margin: 0 0.3em; }
-      .timestamp { text-align: center; font-size: 0.9em; color: #666; margin: 0.5rem 0 0 0; }
-    </style>
-    </head><body>
-    """)
-
-    f.write("""
-    <div class="club-message">
-      <p>From Holbrook to every corner of the South Shore, our teams are out there giving it their all. This is your full travel schedule for the week—home and away.</p>
-      <p>If you don't see any games below, it just means that there are none this week!</p>
-    </div>
-    """)
-
-    if not games_by_day:
-        f.write("""
-        <div class="day-box" style="max-width:700px; margin:2em auto; background:#fff3cd; border-left:6px solid #f0ad4e; padding:1.5em; border-radius:12px;">
-            <h2 style="text-align:center;">No Travel Games This Week</h2>
-            <p style='text-align:center; color:#555;'>Your teams are off this week — enjoy the break!</p>
-        </div>
-        </body></html>
-        """)
-    else:
-        for date_label in sorted(
-            games_by_day.keys(),
-            key=lambda d: datetime.strptime(d + f" " + str(today.year), "%A, %b %d %Y")
-        ):
-            day_games = games_by_day[date_label]
-            home_games = [g for g in day_games if g["is_home"]]
-            away_games = [g for g in day_games if not g["is_home"]]
-
-            f.write(f'<h2>📅 {date_label}</h2><div class="day-container">')
-
-            if home_games:
-                f.write('<div class="home-box"><h3>🏠 Home Games</h3><ul>')
-                for game in sorted(
-                    home_games,
-                    key=lambda g: datetime.strptime(g["time"], "%I:%M %p")
-                ):
-                    crest_html = f'<img src="{hayasa_crest}" class="crest" alt="HAYSA">'
-                    opponent_crest_html = (
-                        f'<img src="{game["crest"]}" class="crest" alt="{game["opponent"]}">'
-                        if game["crest"] else ""
-                    )
-                    f.write(
-                        f"<li><strong>{game['time']}</strong> – "
-                        f"{crest_html}{game['team']} vs. {game['opponent']}{opponent_crest_html} – "
-                        f"<span style='color:#0057a0;'>{game['normalized_location']}</span></li>"
-                    )
-                f.write("</ul></div>")
-
-            if away_games:
-                f.write('<div class="away-box"><h3>🚐 Away Games</h3><ul>')
-                for game in sorted(
-                    away_games,
-                    key=lambda g: datetime.strptime(g["time"], "%I:%M %p")
-                ):
-                    crest_html = (
-                        f'<img src="{game["crest"]}" class="crest" alt="{game["opponent"]}">'
-                        if game["crest"] else ""
-                    )
-                    f.write(
-                        f"<li><strong>{game['time']}</strong> – "
-                        f"{game['team']} @ {game['opponent']}{crest_html} – "
-                        f"<span style='color:#8e44ad;'>{game['normalized_location']}</span></li>"
-                    )
-                f.write("</ul></div>")
-
-            f.write("</div>")
-
-        timestamp = to_eastern(datetime.utcnow()).strftime("%A, %B %d, %Y at %I:%M %p %Z")
-        f.write(f"<p class='timestamp'>Last updated: {timestamp}</p>")
-        f.write("</body></html>")
