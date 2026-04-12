@@ -5,39 +5,34 @@ import ssl
 from collections import defaultdict
 import pytz
 import re
-import time
 
 # --- Timezone helpers ---
 def to_eastern(dt):
-    eastern = pytz.timezone('US/Eastern')
+    eastern = pytz.timezone("US/Eastern")
     if dt.tzinfo is None:
         dt = pytz.utc.localize(dt)
     return dt.astimezone(eastern)
 
+
 # --- iCal Feed (browser user-agent only, NO cache-busting) ---
 ssl._create_default_https_context = ssl._create_unverified_context
 
-ical_url = "http://tmsdln.com/19hyx"
-headers = {
+ICAL_URL = "http://tmsdln.com/19hyx"
+HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 }
 
-response = requests.get(ical_url, headers=headers)
+response = requests.get(ICAL_URL, headers=HEADERS)
 response.raise_for_status()
 calendar_data = response.text
 
 # --- DEBUG: Dump ICS feed so we can see what GitHub Actions is receiving ---
+# (Make sure ics_dump.txt is in .gitignore)
 with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
 
 calendar = Calendar(calendar_data)
 
-
-# --- DEBUG: Dump ICS feed so we can see what GitHub Actions is receiving ---
-with open("ics_dump.txt", "w", encoding="utf-8") as dump:
-    dump.write(calendar_data)
-
-calendar = Calendar(calendar_data)
 
 # --- Field normalization (display only) ---
 field_name_map = {
@@ -50,14 +45,16 @@ field_name_map = {
     "Sumner Field": "Sean Joyce Field",
     "Holbrook Playground": "Sean Joyce Field",
     "H-SJ4": "Sean Joyce Field",
+    # Avon Butler, etc., can be added here if you want to normalize those too
 }
 
-def normalize_field_name(location):
+def normalize_field_name(location: str) -> str:
     loc = (location or "").strip()
     for alias, name in field_name_map.items():
         if alias.lower() in loc.lower():
             return name
     return loc
+
 
 # --- Crest Mapping ---
 hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
@@ -87,14 +84,66 @@ opponent_crests = {
 }
 
 # --- Travel / Rec detection patterns ---
-HOLBROOK_TRAVEL_PATTERN = re.compile(r'^\d+.*(Boys|Girls).*$')
+
+# Holbrook travel team formats in ICS:
+#   "5/6 Girls (Baird-Miller)"
+#   "3/4 Boys (Walsh)"
+#   "11/12/PG Girls Travel (Green)"
+#   "9/10 Boys Lauterhahn"
+#   "7/8 Boys (Mills)"
+HOLBROOK_TRAVEL_PATTERN = re.compile(
+    r'^\s*\d+(?:/\d+)*(?:/PG)?\s+(?:Boys|Girls)\b',
+    re.IGNORECASE,
+)
+
+# Opponents are ALL CAPS words with spaces/hyphens:
 OPPONENT_PATTERN = re.compile(r'^[A-Z][A-Z \-]+$')
+
+# Separator: "vs", "vs.", "VS", "VS.", "@"
+VS_SEPARATOR_PATTERN = re.compile(r'\bvs\.?\b', re.IGNORECASE)
+
 
 def is_holbrook_travel_team(text: str) -> bool:
     return bool(HOLBROOK_TRAVEL_PATTERN.match(text.strip()))
 
+
 def is_travel_opponent(text: str) -> bool:
     return bool(OPPONENT_PATTERN.match(text.strip()))
+
+
+def split_teams(summary: str):
+    """
+    Split an event SUMMARY into (left, separator, right).
+    Supports:
+      - "Holbrook Team vs. OPPONENT"
+      - "OPPONENT vs. Holbrook Team"
+      - "Holbrook Team @ OPPONENT"
+      - "OPPONENT @ Holbrook Team"
+    Returns (left, sep, right) or (None, None, None) if not parseable.
+    """
+    name = summary or ""
+    name = name.strip()
+
+    # Try vs/vs./VS/VS.
+    vs_match = VS_SEPARATOR_PATTERN.search(name)
+    if vs_match:
+        sep = "vs"
+        idx = vs_match.start()
+        left = name[:idx].strip()
+        right = name[vs_match.end():].strip()
+        if left and right:
+            return left, sep, right
+
+    # Fallback: "@"
+    if "@" in name:
+        parts = name.split("@", 1)
+        left = parts[0].strip()
+        right = parts[1].strip()
+        if left and right:
+            return left, "@", right
+
+    return None, None, None
+
 
 # --- Date Filtering (this week: Monday–Sunday, Eastern) ---
 today = datetime.now(pytz.timezone("US/Eastern"))
@@ -104,8 +153,6 @@ this_sunday = this_monday + timedelta(days=6)
 # --- Parse Events ---
 games_by_day = defaultdict(list)
 home_games_by_day = defaultdict(list)
-
-
 
 for event in calendar.events:
     name = event.name or ""
@@ -120,18 +167,10 @@ for event in calendar.events:
     time_str = start.strftime("%I:%M %p").lstrip("0")
     date_label = start.strftime("%A, %b %d")
 
-    # Determine separator
-    if "vs." in name:
-        separator = "vs."
-        left, right = name.split("vs.", 1)
-    elif "@" in name:
-        separator = "@"
-        left, right = name.split("@", 1)
-    else:
+    left, separator, right = split_teams(name)
+    if not left or not separator or not right:
+        # Not a recognizable game format
         continue
-
-    left = left.strip()
-    right = right.strip()
 
     # Travel detection
     left_is_holbrook = is_holbrook_travel_team(left)
@@ -139,21 +178,25 @@ for event in calendar.events:
     left_is_opponent = is_travel_opponent(left)
     right_is_opponent = is_travel_opponent(right)
 
-    # Travel game logic
     is_travel = (
         (left_is_holbrook and right_is_opponent) or
         (right_is_holbrook and left_is_opponent) or
         (left_is_holbrook and right_is_holbrook)
     )
-
     if not is_travel:
         continue
 
     # Determine home/away
-    if separator == "vs.":
+    if separator == "vs":
+        # "Holbrook vs Opponent" => Holbrook home
         is_home = left_is_holbrook
-    else:
+    elif separator == "@":
+        # "Holbrook @ Opponent" => Holbrook away
+        # "Opponent @ Holbrook" => Holbrook home
         is_home = right_is_holbrook
+    else:
+        # Shouldn't happen, but be explicit
+        is_home = False
 
     # Assign Holbrook team + opponent
     if left_is_holbrook:
@@ -177,6 +220,5 @@ for event in calendar.events:
     }
 
     games_by_day[date_label].append(game)
-
     if is_home:
         home_games_by_day[date_label].append(game)
