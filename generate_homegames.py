@@ -14,7 +14,7 @@ def to_eastern(dt):
     return dt.astimezone(eastern)
 
 
-# --- FIXED ICS DOWNLOAD (handles file-download responses) ---
+# --- FIXED ICS DOWNLOAD WITH UTF‑16 FALLBACK ---
 ssl._create_default_https_context = ssl._create_unverified_context
 
 ICAL_URL = "http://tmsdln.com/19hyx"
@@ -25,20 +25,46 @@ HEADERS = {
 response = requests.get(ICAL_URL, headers=HEADERS)
 response.raise_for_status()
 
-# Read raw bytes instead of response.text
 raw_bytes = response.content
 
-# Try UTF‑8 first, fallback to Latin‑1
+# Try UTF‑8
 try:
-    calendar_data = raw_bytes.decode("utf-8", errors="ignore")
+    calendar_data = raw_bytes.decode("utf-8")
 except:
-    calendar_data = raw_bytes.decode("latin-1", errors="ignore")
+    calendar_data = ""
+
+# Try Latin‑1
+if "BEGIN:VCALENDAR" not in calendar_data:
+    try:
+        calendar_data = raw_bytes.decode("latin-1")
+    except:
+        pass
+
+# Try UTF‑16
+if "BEGIN:VCALENDAR" not in calendar_data:
+    try:
+        calendar_data = raw_bytes.decode("utf-16")
+    except:
+        pass
+
+# Try UTF‑16LE
+if "BEGIN:VCALENDAR" not in calendar_data:
+    try:
+        calendar_data = raw_bytes.decode("utf-16le")
+    except:
+        pass
+
+# Try UTF‑16BE
+if "BEGIN:VCALENDAR" not in calendar_data:
+    try:
+        calendar_data = raw_bytes.decode("utf-16be")
+    except:
+        pass
 
 # Debug dump
 with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
 
-# Parse ICS
 calendar = Calendar(calendar_data)
 
 
