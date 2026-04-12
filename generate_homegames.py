@@ -27,7 +27,7 @@ response.raise_for_status()
 calendar_data = response.text
 
 # --- DEBUG: Dump ICS feed so we can see what GitHub Actions is receiving ---
-# (Make sure ics_dump.txt is in .gitignore)
+# Make sure ics_dump.txt is in .gitignore
 with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
 
@@ -45,7 +45,7 @@ field_name_map = {
     "Sumner Field": "Sean Joyce Field",
     "Holbrook Playground": "Sean Joyce Field",
     "H-SJ4": "Sean Joyce Field",
-    # Avon Butler, etc., can be added here if you want to normalize those too
+    # Add more if you want to normalize Avon Butler, etc.
 }
 
 def normalize_field_name(location: str) -> str:
@@ -121,8 +121,7 @@ def split_teams(summary: str):
       - "OPPONENT @ Holbrook Team"
     Returns (left, sep, right) or (None, None, None) if not parseable.
     """
-    name = summary or ""
-    name = name.strip()
+    name = (summary or "").strip()
 
     # Try vs/vs./VS/VS.
     vs_match = VS_SEPARATOR_PATTERN.search(name)
@@ -151,8 +150,8 @@ this_monday = today - timedelta(days=today.weekday())
 this_sunday = this_monday + timedelta(days=6)
 
 # --- Parse Events ---
-games_by_day = defaultdict(list)
-home_games_by_day = defaultdict(list)
+games_by_day = defaultdict(list)       # all travel games
+home_games_by_day = defaultdict(list)  # only Holbrook home games
 
 for event in calendar.events:
     name = event.name or ""
@@ -169,7 +168,6 @@ for event in calendar.events:
 
     left, separator, right = split_teams(name)
     if not left or not separator or not right:
-        # Not a recognizable game format
         continue
 
     # Travel detection
@@ -195,7 +193,6 @@ for event in calendar.events:
         # "Opponent @ Holbrook" => Holbrook home
         is_home = right_is_holbrook
     else:
-        # Shouldn't happen, but be explicit
         is_home = False
 
     # Assign Holbrook team + opponent
@@ -206,7 +203,10 @@ for event in calendar.events:
         hay_team = right
         opponent = left
 
-    opponent_clean = opponent.strip()
+    # Normalize opponent name (ICS sometimes repeats tokens)
+    m = re.search(r'\b([A-Z][A-Z \-]+)\b', opponent)
+    opponent_clean = m.group(1).strip() if m else opponent.strip()
+
     crest = opponent_crests.get(opponent_clean.upper(), "")
 
     game = {
@@ -222,3 +222,125 @@ for event in calendar.events:
     games_by_day[date_label].append(game)
     if is_home:
         home_games_by_day[date_label].append(game)
+
+
+# --- HTML Rendering Helpers ---
+
+def format_last_updated() -> str:
+    now = datetime.now(pytz.timezone("US/Eastern"))
+    return now.strftime("%A, %B %d, %Y at %I:%M %p %Z")
+
+
+def render_games_section(title: str, games_map: dict) -> str:
+    """
+    games_map: dict[date_label] -> list[game]
+    """
+    if not games_map:
+        return """
+        <p>If you don't see any games below, it just means that there are none this week!</p>
+        """
+
+    # Sort dates chronologically by parsing the label back to a date
+    def parse_label(label: str):
+        return datetime.strptime(label, "%A, %b %d").replace(year=today.year)
+
+    sections = []
+    for date_label in sorted(games_map.keys(), key=parse_label):
+        games = games_map[date_label]
+        sections.append(f'<h2>📅 {date_label}</h2>')
+        sections.append('<ul class="game-list">')
+        for g in sorted(games, key=lambda x: x["time"]):
+            time_str = g["time"]
+            team = g["team"]
+            opponent = g["opponent"]
+            loc = g["normalized_location"]
+            home_away_icon = "🏠" if g["is_home"] else "🚌"
+            sections.append(
+                f'<li><strong>{time_str}</strong> – ⚽ {team} vs. {opponent} {home_away_icon} – '
+                f'<strong>{loc}</strong></li>'
+            )
+        sections.append("</ul>")
+
+    return "\n".join(sections)
+
+
+def render_page(title: str, intro: str, games_map: dict) -> str:
+    last_updated = format_last_updated()
+    games_html = render_games_section(title, games_map)
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{title}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {{
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 1.5rem;
+      background: #f5f5f5;
+      color: #222;
+    }}
+    .container {{
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }}
+    h1 {{
+      margin-top: 0;
+      font-size: 1.6rem;
+    }}
+    h2 {{
+      margin-top: 1.5rem;
+      font-size: 1.2rem;
+      color: #333;
+    }}
+    p {{
+      line-height: 1.5;
+    }}
+    .game-list {{
+      list-style: none;
+      padding-left: 0;
+    }}
+    .game-list li {{
+      margin: 0.4rem 0;
+    }}
+    .updated {{
+      margin-top: 1.5rem;
+      font-size: 0.85rem;
+      color: #666;
+    }}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>{title}</h1>
+    <p>{intro}</p>
+    {games_html}
+    <p class="updated">Last updated: {last_updated}</p>
+  </div>
+</body>
+</html>
+"""
+
+
+# --- Generate home.html (home games only) ---
+home_intro = (
+    "Looking for a quick sideline stop this week? These games are happening right here in Holbrook—"
+    "bring a chair, grab a coffee, and help make the sidelines feel like home!"
+)
+home_html = render_page("Holbrook Home Games", home_intro, home_games_by_day)
+with open("home.html", "w", encoding="utf-8") as f:
+    f.write(home_html)
+
+# --- Generate all_games.html (all travel games, home + away) ---
+all_intro = (
+    "Here are all Holbrook travel games for this week—home and away—so you can follow every team."
+)
+all_html = render_page("Holbrook Travel Schedule", all_intro, games_by_day)
+with open("all_games.html", "w", encoding="utf-8") as f:
+    f.write(all_html)
