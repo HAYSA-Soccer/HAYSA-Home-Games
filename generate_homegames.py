@@ -14,7 +14,7 @@ def to_eastern(dt):
     return dt.astimezone(eastern)
 
 
-# --- iCal Feed (browser user-agent only, NO cache-busting) ---
+# --- FIXED ICS DOWNLOAD (handles file-download responses) ---
 ssl._create_default_https_context = ssl._create_unverified_context
 
 ICAL_URL = "http://tmsdln.com/19hyx"
@@ -24,12 +24,21 @@ HEADERS = {
 
 response = requests.get(ICAL_URL, headers=HEADERS)
 response.raise_for_status()
-calendar_data = response.text
 
-# --- DEBUG: Dump ICS feed so we can see what GitHub Actions is receiving ---
+# Read raw bytes instead of response.text
+raw_bytes = response.content
+
+# Try UTF‑8 first, fallback to Latin‑1
+try:
+    calendar_data = raw_bytes.decode("utf-8", errors="ignore")
+except:
+    calendar_data = raw_bytes.decode("latin-1", errors="ignore")
+
+# Debug dump
 with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
 
+# Parse ICS
 calendar = Calendar(calendar_data)
 
 
