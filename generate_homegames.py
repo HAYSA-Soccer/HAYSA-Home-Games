@@ -14,15 +14,33 @@ def to_eastern(dt):
     return dt.astimezone(eastern)
 
 
-# --- FIXED ICS DOWNLOAD WITH UTF‑16 FALLBACK ---
+# --- ICS DOWNLOAD WITH FULL BROWSER SPOOFING ---
 ssl._create_default_https_context = ssl._create_unverified_context
 
 ICAL_URL = "http://tmsdln.com/19hyx"
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+
+BROWSER_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/123.0.0.0 Safari/537.36"
+    ),
+    "Accept": (
+        "text/html,application/xhtml+xml,application/xml;"
+        "q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,"
+        "application/signed-exchange;v=b3;q=0.7"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Connection": "keep-alive",
+    "Upgrade-Insecure-Requests": "1",
+    "DNT": "1",
 }
 
-response = requests.get(ICAL_URL, headers=HEADERS)
+session = requests.Session()
+session.headers.update(BROWSER_HEADERS)
+
+response = session.get(ICAL_URL, allow_redirects=True, timeout=30, verify=False)
 response.raise_for_status()
 
 raw_bytes = response.content
@@ -61,7 +79,6 @@ if "BEGIN:VCALENDAR" not in calendar_data:
     except:
         pass
 
-# Debug dump
 with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
 
@@ -157,7 +174,6 @@ today = datetime.now(pytz.timezone("US/Eastern"))
 this_monday = today - timedelta(days=today.weekday())
 this_sunday = this_monday + timedelta(days=6)
 
-# --- Parse Events ---
 games_by_day = defaultdict(list)
 home_games_by_day = defaultdict(list)
 
@@ -223,7 +239,6 @@ for event in calendar.events:
         home_games_by_day[date_label].append(game)
 
 
-# --- HTML Rendering Helpers ---
 def format_last_updated() -> str:
     now = datetime.now(pytz.timezone("US/Eastern"))
     return now.strftime("%A, %B %d, %Y at %I:%M %p %Z")
@@ -312,7 +327,6 @@ def render_page(title: str, intro: str, games_map: dict) -> str:
 """
 
 
-# --- Generate home.html ---
 home_intro = (
     "Looking for a quick sideline stop this week? These games are happening right here in Holbrook—"
     "bring a chair, grab a coffee, and help make the sidelines feel like home!"
@@ -321,7 +335,6 @@ home_html = render_page("Holbrook Home Games", home_intro, home_games_by_day)
 with open("home.html", "w", encoding="utf-8") as f:
     f.write(home_html)
 
-# --- Generate all_games.html ---
 all_intro = (
     "Here are all Holbrook travel games for this week—home and away—so you can follow every team."
 )
