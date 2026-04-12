@@ -27,7 +27,6 @@ response.raise_for_status()
 calendar_data = response.text
 
 # --- DEBUG: Dump ICS feed so we can see what GitHub Actions is receiving ---
-# Make sure ics_dump.txt is in .gitignore
 with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
 
@@ -45,7 +44,6 @@ field_name_map = {
     "Sumner Field": "Sean Joyce Field",
     "Holbrook Playground": "Sean Joyce Field",
     "H-SJ4": "Sean Joyce Field",
-    # Add more if you want to normalize Avon Butler, etc.
 }
 
 def normalize_field_name(location: str) -> str:
@@ -57,49 +55,39 @@ def normalize_field_name(location: str) -> str:
 
 
 # --- Crest Mapping ---
-hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 opponent_crests = {
-    "ABINGTON": "https://static.wixstatic.com/media/97261c_54471fdb634c4d3fa113fe951de314ef~mv2.png/v1/fill/w_174,h_204,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/97261c_54471fdb634c4d3fa113fe951de314ef~mv2.png",
-    "ACUSHNET": "https://nebula.wsimg.com/d34af03927e1352f5052348865f537ac?AccessKeyId=8C796AAE797710F94A84&disposition=0&alloworigin=1",
-    "BRAINTREE": "https://tse4.mm.bing.net/th/id/OIP.8mgnbl-_HFeJrpvFPBck9AHaHa?pid=Api&P=0&h=180",
+    "ABINGTON": "https://static.wixstatic.com/media/97261c_54471fdb634c4d3fa113fe951de314ef~mv2.png",
+    "ACUSHNET": "https://nebula.wsimg.com/d34af03927e1352f5052348865f537ac",
+    "BRAINTREE": "https://tse4.mm.bing.net/th/id/OIP.8mgnbl-_HFeJrpvFPBck9AHaHa",
     "BRIDGEWATER": "https://www.bridgewateryouthsoccer.com/Portals/4899/logo/logo636223303834986882.png",
-    "COHASSET": "https://tse3.mm.bing.net/th/id/OIP.GGHkIzybTl-3dbqcY51nVAHaJj?pid=Api&P=0&h=180",
-    "EAST BRIDGEWATER": "https://www.ebysa.com/Portals/57/EBYSA%20Web%20Heading%20Narrow%20Large.png?ver=Pw7zgypKOiIftXloW6Hg0w%3d%3d",
+    "COHASSET": "https://tse3.mm.bing.net/th/id/OIP.GGHkIzybTl-3dbqcY51nVAHaJj",
+    "EAST BRIDGEWATER": "https://www.ebysa.com/Portals/57/EBYSA%20Web%20Heading%20Narrow%20Large.png",
     "EASTON": "https://cdn1.sportngin.com/attachments/call_to_action/4dc7-210934873/EYSL_Ball_large.png",
-    "HANSON": "https://whitmanhansonyouthsoccer.org/Portals/19/image001.png?ver=MY_OEzOjTRl4maigQFKbVg%3d%3d",
-    "WHITMAN-HANSON": "https://whitmanhansonyouthsoccer.org/Portals/19/image001.png?ver=MY_OEzOjTRl4maigQFKbVg%3d%3d",
+    "HANSON": "https://whitmanhansonyouthsoccer.org/Portals/19/image001.png",
+    "WHITMAN-HANSON": "https://whitmanhansonyouthsoccer.org/Portals/19/image001.png",
     "MARSHFIELD": "https://www.marshfieldsoccer.com/wp-content/uploads/sites/678/2022/05/MYS_Full_Color_Black_White_LizardNeonGreen.png",
     "MMR": "https://www.marionma.gov/ImageRepository/Document?documentID=72",
-    "MIDDLEBORO": "https://images.squarespace-cdn.com/content/v1/5592f956e4b0d217906ce58b/1530823172680-BO9CXY334H3TYWM0M1A6/logo.png?format=1500w",
-    "PLYMOUTH": "https://nebula.wsimg.com/78a7bc57d1d03265f333a66707a25638?AccessKeyId=63688D9BB3B532ACAA07&disposition=0&alloworigin=1",
-    "QUINCY": "https://tse2.mm.bing.net/th/id/OIP.CZdNrzdApKNlAj0QhyKmVAAAAA?pid=Api&P=0&h=180",
+    "MIDDLEBORO": "https://images.squarespace-cdn.com/content/v1/5592f956e4b0d217906ce58b/1530823172680-BO9CXY334H3TYWM0M1A6/logo.png",
+    "PLYMOUTH": "https://nebula.wsimg.com/78a7bc57d1d03265f333a66707a25638",
+    "QUINCY": "https://tse2.mm.bing.net/th/id/OIP.CZdNrzdApKNlAj0QhyKmVAAAAA",
     "RANDOLPH": "https://www.wegotsoccer.com/mmWGS/team/randolph/randolph-logo.png",
     "RAYNHAM": "https://raynhamsoccer.com/wp-content/uploads/2023/02/RAYNHAM-LOGO.png",
-    "ROCKLAND": "https://tse1.mm.bing.net/th/id/OIP.624YgOq0bVdVkfJOolTAmgAAAA?pid=Api&P=0&h=180",
-    "SHARON": "https://images.squarespace-cdn.com/content/v1/66a28a811406ea11d1e561df/4f0e039a-9230-4471-982b-0e549d47727d/SSA_Logo_Transparent.png?format=1500w",
-    "SILVER LAKE": "https://image.maxpreps.io/school-mascot/a/3/d/a3d4d72f-2659-4933-9947-94149c2a5b0b.gif?version=635801467800000000&width=128&height=128&auto=webp&format=pjpg",
-    "STOUGHTON": "https://stoughtonsoccer.org/Portals/68/logo_transparent.png?ver=2021-09-08-100316-333",
+    "ROCKLAND": "https://tse1.mm.bing.net/th/id/OIP.624YgOq0bVdVkfJOolTAmgAAAA",
+    "SHARON": "https://images.squarespace-cdn.com/content/v1/66a28a811406ea11d1e561df/4f0e039a-9230-4471-982b-0e549d47727d/SSA_Logo_Transparent.png",
+    "SILVER LAKE": "https://image.maxpreps.io/school-mascot/a/3/d/a3d4d72f-2659-4933-9947-94149c2a5b0b.gif",
+    "STOUGHTON": "https://stoughtonsoccer.org/Portals/68/logo_transparent.png",
     "WEST BRIDGEWATER": "https://www.wbyaa.com/Portals/52208/logo638573245926682379.png",
     "WEYMOUTH": "https://weymouthsite.sportspilot.com/portals/47/Images/WYS%20Logo_small.jpg",
 }
 
-# --- Travel / Rec detection patterns ---
 
-# Holbrook travel team formats in ICS:
-#   "5/6 Girls (Baird-Miller)"
-#   "3/4 Boys (Walsh)"
-#   "11/12/PG Girls Travel (Green)"
-#   "9/10 Boys Lauterhahn"
-#   "7/8 Boys (Mills)"
+# --- Travel / Rec detection patterns ---
 HOLBROOK_TRAVEL_PATTERN = re.compile(
     r'^\s*\d+(?:/\d+)*(?:/PG)?\s+(?:Boys|Girls)\b',
     re.IGNORECASE,
 )
 
-# Opponents are ALL CAPS words with spaces/hyphens:
 OPPONENT_PATTERN = re.compile(r'^[A-Z][A-Z \-]+$')
-
-# Separator: "vs", "vs.", "VS", "VS.", "@"
 VS_SEPARATOR_PATTERN = re.compile(r'\bvs\.?\b', re.IGNORECASE)
 
 
@@ -112,34 +100,19 @@ def is_travel_opponent(text: str) -> bool:
 
 
 def split_teams(summary: str):
-    """
-    Split an event SUMMARY into (left, separator, right).
-    Supports:
-      - "Holbrook Team vs. OPPONENT"
-      - "OPPONENT vs. Holbrook Team"
-      - "Holbrook Team @ OPPONENT"
-      - "OPPONENT @ Holbrook Team"
-    Returns (left, sep, right) or (None, None, None) if not parseable.
-    """
     name = (summary or "").strip()
 
-    # Try vs/vs./VS/VS.
     vs_match = VS_SEPARATOR_PATTERN.search(name)
     if vs_match:
         sep = "vs"
-        idx = vs_match.start()
-        left = name[:idx].strip()
+        left = name[:vs_match.start()].strip()
         right = name[vs_match.end():].strip()
         if left and right:
             return left, sep, right
 
-    # Fallback: "@"
     if "@" in name:
-        parts = name.split("@", 1)
-        left = parts[0].strip()
-        right = parts[1].strip()
-        if left and right:
-            return left, "@", right
+        left, right = name.split("@", 1)
+        return left.strip(), "@", right.strip()
 
     return None, None, None
 
@@ -150,8 +123,8 @@ this_monday = today - timedelta(days=today.weekday())
 this_sunday = this_monday + timedelta(days=6)
 
 # --- Parse Events ---
-games_by_day = defaultdict(list)       # all travel games
-home_games_by_day = defaultdict(list)  # only Holbrook home games
+games_by_day = defaultdict(list)
+home_games_by_day = defaultdict(list)
 
 for event in calendar.events:
     name = event.name or ""
@@ -170,7 +143,6 @@ for event in calendar.events:
     if not left or not separator or not right:
         continue
 
-    # Travel detection
     left_is_holbrook = is_holbrook_travel_team(left)
     right_is_holbrook = is_holbrook_travel_team(right)
     left_is_opponent = is_travel_opponent(left)
@@ -184,18 +156,11 @@ for event in calendar.events:
     if not is_travel:
         continue
 
-    # Determine home/away
     if separator == "vs":
-        # "Holbrook vs Opponent" => Holbrook home
         is_home = left_is_holbrook
-    elif separator == "@":
-        # "Holbrook @ Opponent" => Holbrook away
-        # "Opponent @ Holbrook" => Holbrook home
-        is_home = right_is_holbrook
     else:
-        is_home = False
+        is_home = right_is_holbrook
 
-    # Assign Holbrook team + opponent
     if left_is_holbrook:
         hay_team = left
         opponent = right
@@ -203,7 +168,6 @@ for event in calendar.events:
         hay_team = right
         opponent = left
 
-    # Normalize opponent name (ICS sometimes repeats tokens)
     m = re.search(r'\b([A-Z][A-Z \-]+)\b', opponent)
     opponent_clean = m.group(1).strip() if m else opponent.strip()
 
@@ -225,22 +189,15 @@ for event in calendar.events:
 
 
 # --- HTML Rendering Helpers ---
-
 def format_last_updated() -> str:
     now = datetime.now(pytz.timezone("US/Eastern"))
     return now.strftime("%A, %B %d, %Y at %I:%M %p %Z")
 
 
-def render_games_section(title: str, games_map: dict) -> str:
-    """
-    games_map: dict[date_label] -> list[game]
-    """
+def render_games_section(games_map: dict) -> str:
     if not games_map:
-        return """
-        <p>If you don't see any games below, it just means that there are none this week!</p>
-        """
+        return "<p>No games this week!</p>"
 
-    # Sort dates chronologically by parsing the label back to a date
     def parse_label(label: str):
         return datetime.strptime(label, "%A, %b %d").replace(year=today.year)
 
@@ -250,14 +207,9 @@ def render_games_section(title: str, games_map: dict) -> str:
         sections.append(f'<h2>📅 {date_label}</h2>')
         sections.append('<ul class="game-list">')
         for g in sorted(games, key=lambda x: x["time"]):
-            time_str = g["time"]
-            team = g["team"]
-            opponent = g["opponent"]
-            loc = g["normalized_location"]
-            home_away_icon = "🏠" if g["is_home"] else "🚌"
             sections.append(
-                f'<li><strong>{time_str}</strong> – ⚽ {team} vs. {opponent} {home_away_icon} – '
-                f'<strong>{loc}</strong></li>'
+                f'<li><strong>{g["time"]}</strong> – ⚽ {g["team"]} vs. {g["opponent"]} '
+                f'{"🏠" if g["is_home"] else "🚌"} – <strong>{g["normalized_location"]}</strong></li>'
             )
         sections.append("</ul>")
 
@@ -266,7 +218,7 @@ def render_games_section(title: str, games_map: dict) -> str:
 
 def render_page(title: str, intro: str, games_map: dict) -> str:
     last_updated = format_last_updated()
-    games_html = render_games_section(title, games_map)
+    games_html = render_games_section(games_map)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -276,7 +228,7 @@ def render_page(title: str, intro: str, games_map: dict) -> str:
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body {{
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: system-ui, sans-serif;
       margin: 0;
       padding: 1.5rem;
       background: #f5f5f5;
@@ -298,9 +250,6 @@ def render_page(title: str, intro: str, games_map: dict) -> str:
       margin-top: 1.5rem;
       font-size: 1.2rem;
       color: #333;
-    }}
-    p {{
-      line-height: 1.5;
     }}
     .game-list {{
       list-style: none;
@@ -328,7 +277,7 @@ def render_page(title: str, intro: str, games_map: dict) -> str:
 """
 
 
-# --- Generate home.html (home games only) ---
+# --- Generate home.html ---
 home_intro = (
     "Looking for a quick sideline stop this week? These games are happening right here in Holbrook—"
     "bring a chair, grab a coffee, and help make the sidelines feel like home!"
@@ -337,7 +286,7 @@ home_html = render_page("Holbrook Home Games", home_intro, home_games_by_day)
 with open("home.html", "w", encoding="utf-8") as f:
     f.write(home_html)
 
-# --- Generate all_games.html (all travel games, home + away) ---
+# --- Generate all_games.html ---
 all_intro = (
     "Here are all Holbrook travel games for this week—home and away—so you can follow every team."
 )
