@@ -28,14 +28,13 @@ jobs:
           with sync_playwright() as p:
               browser = p.chromium.launch()
               page = browser.new_page()
-              page.goto(url)
 
-              # Wait for the network response
-              response = page.wait_for_response(lambda r: r.url == url)
-              data = response.body()
+              # Wait for the ICS file download
+              with page.expect_download() as download_info:
+                  page.goto(url)
 
-              with open("schedule.ics", "wb") as f:
-                  f.write(data)
+              download = download_info.value
+              download.save_as("schedule.ics")
 
               browser.close()
           EOF
