@@ -313,19 +313,37 @@ def html_footer():
 """
 
 def render_game(g, home_or_away):
-    haycrest_html = f"<img class='crest' src='{hayasa_crest}'>"
-    oppcrest_html = f"<img class='crest' src='{g['crest']}'>" if g.get("crest") else ""
+    # Determine home vs away team/crest
+    if g["is_home"]:
+        home_crest = hayasa_crest
+        home_team = g["team"]
+        away_crest = g["crest"]
+        away_team = g["opponent"]
+    else:
+        home_crest = g["crest"]
+        home_team = g["opponent"]
+        away_crest = hayasa_crest
+        away_team = g["team"]
+
+    home_crest_html = f"<img class='crest' src='{home_crest}'>" if home_crest else ""
+    away_crest_html = f"<img class='crest' src='{away_crest}'>" if away_crest else ""
 
     return f"""
     <div class="game {home_or_away}">
-      {haycrest_html}
-      {oppcrest_html}
       <span class="time">{g['time_str']}</span>
-      <span class="team">{g['team']}</span>
-      <span class="opponent">{g['opponent_display']}</span>
+
+      {home_crest_html}
+      <span class="team">{home_team}</span>
+
+      <span class="opponent">vs.</span>
+
+      {away_crest_html}
+      <span class="team">{away_team}</span>
+
       <span class="location">{g['normalized_location']}</span>
     </div>
     """
+
 
 
 
