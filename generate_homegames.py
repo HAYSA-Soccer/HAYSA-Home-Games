@@ -307,6 +307,13 @@ def render_day_block(date_str, home_games, away_games):
 def generate_home_html(days):
     html = [html_header("Holbrook Home Games")]
     html.append('<p class="subtitle">These games are happening right here in Holbrook.</p>')
+    
+    # Add link to full schedule
+    html.append('<p style="text-align:center; margin-top:-1em;">')
+    html.append('<a href="all_games.html" style="color:#004080; font-weight:600;">See all travel games (home & away)</a>')
+    html.append('</p>')
+
+
 
     def parse_date(label):
         return datetime.strptime(label, "%A, %b %d").replace(year=today.year)
