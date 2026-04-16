@@ -112,3 +112,15 @@ body {
     margin-bottom: 4px;
   }
 }
+
+.game img.crest {
+  width: 28px;
+  height: 28px;
+  margin-right: 6px;
+}
+
+.game {
+  display: grid;
+  grid-template-columns: 32px 32px 90px 1fr 1fr 1fr;
+  gap: 6px;
+}
