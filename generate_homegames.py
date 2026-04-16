@@ -84,8 +84,10 @@ opponent_crests = {
     "SILVER LAKE": "https://image.maxpreps.io/school-mascot/a/3/d/a3d4d72f-2659-4933-9947-94149c2a5b0b.gif",
     "STOUGHTON": "https://stoughtonsoccer.org/Portals/68/logo_transparent.png",
     "WEST BRIDGEWATER": "https://www.wbyaa.com/Portals/52208/logo638573245926682379.png",
-    "WEYMOUTH": "https://weymouthsite.sportspilot.com/portals/47/Images/WYS%20Logo_small.jpg",
-}   "HANOVER": ""
+    "WEYMOUTH": "https://weymouthsite.sportspilot.com/portals/47/Images/WYS%20Logo_small.jpg"
+    "HANOVER": "",
+
+}   
 
 hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 
