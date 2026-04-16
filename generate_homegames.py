@@ -92,7 +92,7 @@ def normalize_field_name(location):
 # CREST MAPPING
 # ---------------------------------------------------------
 
-SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1TElu-ZV_7M-AyA3qbL0ALfugszYj5KiE7gf-grb-FP4/export?format=csv&gid=0"
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRu2yQBMvIYVuK7f7SdHkRHbexYLTKRiQoGe0mHtb7QRHQWZc0ekbabhrbGn9gI02zBywIFNQjnon9h/pub?gid=0&single=true&output=csv"
 
 opponent_crests = load_crest_map_from_google_sheet(SHEET_CSV_URL)
  
