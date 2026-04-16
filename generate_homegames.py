@@ -312,7 +312,7 @@ def html_footer():
 </html>
 """
 
-ddef render_game(g, home_or_away):
+def render_game(g, home_or_away):
     haycrest_html = f"<img class='crest' src='{hayasa_crest}'>"
     oppcrest_html = f"<img class='crest' src='{g['crest']}'>" if g.get("crest") else ""
 
