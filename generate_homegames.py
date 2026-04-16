@@ -1,8 +1,25 @@
 import re
+import requests
 from ics import Calendar
 from datetime import datetime, timedelta
 from collections import defaultdict
 import pytz
+
+# ---------------------------------------------------------
+# ICS FETCH (DIRECT, NO CLOUDFLARE)
+# ---------------------------------------------------------
+
+ICAL_URL = "https://calendar.teamsideline.com/ical?d=vseBS5X6j9qQXmVOavlTZkdNQFag+DgzH/UkvFJa2mpTE5JTsKoabQ=="
+
+response = requests.get(ICAL_URL)
+response.raise_for_status()
+calendar_data = response.text
+
+# Optional: write dump for debugging
+with open("ics_dump.txt", "w", encoding="utf-8") as dump:
+    dump.write(calendar_data)
+
+calendar = Calendar(calendar_data)
 
 # ---------------------------------------------------------
 # TIMEZONE HELPERS
@@ -13,17 +30,6 @@ def to_eastern(dt):
     if dt.tzinfo is None:
         dt = pytz.utc.localize(dt)
     return dt.astimezone(eastern)
-
-
-# ---------------------------------------------------------
-# READ ICS DOWNLOADED BY PLAYWRIGHT
-# ---------------------------------------------------------
-
-with open("schedule.ics", "r", encoding="utf-8", errors="ignore") as f:
-    calendar_data = f.read()
-
-calendar = Calendar(calendar_data)
-
 
 # ---------------------------------------------------------
 # FIELD NORMALIZATION
@@ -49,7 +55,6 @@ def normalize_field_name(location):
         if alias.lower() in loc.lower():
             return name
     return loc
-
 
 # ---------------------------------------------------------
 # CREST MAPPING
@@ -81,7 +86,6 @@ opponent_crests = {
 
 hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 
-
 # ---------------------------------------------------------
 # TEAM & OPPONENT DETECTION
 # ---------------------------------------------------------
@@ -101,7 +105,7 @@ def is_opponent(text):
 
 def split_teams(name):
     name = name.strip()
-    name = name.replace("\u00A0", " ")  # NBSP
+    name = name.replace("\u00A0", " ")
     name = name.replace("–", "-").replace("—", "-")
 
     match = re.search(r"\b(vs?|VS?)[\.\s]*\b|@", name)
@@ -114,7 +118,6 @@ def split_teams(name):
 
     return left, sep, right
 
-
 # ---------------------------------------------------------
 # DATE FILTERING (THIS WEEK)
 # ---------------------------------------------------------
@@ -125,7 +128,6 @@ this_sunday = this_monday + timedelta(days=6)
 
 games_by_day = defaultdict(list)
 home_games_by_day = defaultdict(list)
-
 
 # ---------------------------------------------------------
 # PARSE EVENTS
@@ -191,9 +193,8 @@ for event in calendar.events:
     if is_home:
         home_games_by_day[date_label].append(game)
 
-
 # ---------------------------------------------------------
-# FALLBACK: If no games this week, show next upcoming games
+# FALLBACK: NEXT UPCOMING GAMES
 # ---------------------------------------------------------
 
 if not games_by_day:
@@ -271,7 +272,6 @@ if not games_by_day:
             if is_home:
                 home_games_by_day[first_date].append(game)
 
-
 # ---------------------------------------------------------
 # HTML RENDERING
 # ---------------------------------------------------------
@@ -279,7 +279,6 @@ if not games_by_day:
 def format_last_updated():
     now = datetime.now(pytz.timezone("US/Eastern"))
     return now.strftime("%A, %B %d, %Y at %I:%M %p %Z")
-
 
 def render_games(games_map):
     if not games_map:
@@ -306,7 +305,6 @@ def render_games(games_map):
         html.append("</ul>")
 
     return "\n".join(html)
-
 
 def render_page(title, intro, games_map):
     return f"""<!DOCTYPE html>
@@ -346,7 +344,6 @@ def render_page(title, intro, games_map):
 </body>
 </html>
 """
-
 
 # ---------------------------------------------------------
 # WRITE OUTPUT FILES
