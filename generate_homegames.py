@@ -91,7 +91,9 @@ def normalize_field_name(location):
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRu2yQBMvIYVuK7f7SdHkRHbexYLTKRiQoGe0mHtb7QRHQWZc0ekbabhrbGn9gI02zBywIFNQjnon9h/pub?gid=0&single=true&output=csv"
 
 opponent_crests = load_crest_map_from_google_sheet(SHEET_CSV_URL)
- 
+
+print("CREST MAP LOADED:")
+print(opponent_crests)
 
 hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 
