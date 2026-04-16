@@ -85,7 +85,7 @@ opponent_crests = {
     "STOUGHTON": "https://stoughtonsoccer.org/Portals/68/logo_transparent.png",
     "WEST BRIDGEWATER": "https://www.wbyaa.com/Portals/52208/logo638573245926682379.png",
     "WEYMOUTH": "https://weymouthsite.sportspilot.com/portals/47/Images/WYS%20Logo_small.jpg",
-    "HANOVER": "",
+    "HANOVER": "https://cdn4.sportngin.com/attachments/call_to_action/eca2-187898068/CleanShot_2023-04-06_at_14.19.53_2x_large.png",
 
 }   
 
