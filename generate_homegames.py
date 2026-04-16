@@ -8,10 +8,6 @@ import csv
 from io import StringIO
 
 def load_crest_map_from_google_sheet(sheet_csv_url):
-    """
-    Downloads the Town Crests sheet as CSV and returns:
-    { "TOWN": "https://drive.google.com/uc?export=view&id=<FILE_ID>" }
-    """
     response = requests.get(sheet_csv_url)
     response.raise_for_status()
 
@@ -22,14 +18,14 @@ def load_crest_map_from_google_sheet(sheet_csv_url):
 
     for row in reader:
         town = row["Town"].strip().upper()
-        filename = row["CrestFile"].strip()
+        file_id = row["FileID"].strip()
 
-        # Build a Drive URL that works for <img src="">
-        crest_url = f"https://drive.google.com/uc?export=view&file={filename}"
+        crest_url = f"https://drive.google.com/uc?export=view&id={file_id}"
 
         crest_map[town] = crest_url
 
     return crest_map
+
 
 
 
