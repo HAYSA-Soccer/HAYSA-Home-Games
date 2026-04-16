@@ -44,76 +44,10 @@ body {
   color: #333;
 }
 
-.game .time {
-  font-weight: 600;
-  width: 90px;
-}
-
-.game .team {
-  flex: 1;
-  font-weight: 500;
-}
-
-.game .opponent {
-  flex: 1;
-  color: #004080;
-}
-
-.game .location {
-  flex: 1;
-  font-style: italic;
-  color: #555;
-}
-
-.game.home {
-  background: #e8f4ff;
-}
-
-.game.away {
-  background: #fff8e8;
-}
-
-.crest {
-  height: 28px;
-  width: 28px;
-  margin-right: 8px;
-  border-radius: 4px;
-  object-fit: contain;
-}
-
-.no-games {
-  font-style: italic;
-  color: #777;
-  padding-left: 0.6em;
-}
-
-.last-updated {
-  margin-top: 2em;
-  text-align: center;
-  color: #777;
-  font-size: 0.9em;
-}
-
-@media (max-width: 600px) {
-  .game {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .game .time {
-    width: auto;
-    margin-bottom: 4px;
-  }
-}
-
-.game img.crest {
-  width: 28px;
-  height: 28px;
-  margin-right: 6px;
-}
-
+/* GRID LAYOUT FOR GAME ROWS */
 .game {
   display: grid;
-  grid-template-columns: 
+  grid-template-columns:
       90px      /* time */
       32px      /* home crest */
       1fr       /* home team */
@@ -127,3 +61,63 @@ body {
   border-bottom: 1px solid #ddd;
 }
 
+.game .time {
+  font-weight: 600;
+}
+
+.game .team {
+  font-weight: 500;
+}
+
+.game .opponent {
+  color: #004080;
+  text-align: center;
+}
+
+.game .location {
+  font-style: italic;
+  color: #555;
+}
+
+.game.home {
+  background: #e8f4ff;
+}
+
+.game.away {
+  background: #fff8e8;
+}
+
+/* CREST IMAGES */
+.crest,
+.game img.crest {
+  width: 28px;
+  height: 28px;
+  margin-right: 6px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+/* NO GAMES MESSAGE */
+.no-games {
+  font-style: italic;
+  color: #777;
+  padding-left: 0.6em;
+}
+
+/* LAST UPDATED FOOTER */
+.last-updated {
+  margin-top: 2em;
+  text-align: center;
+  color: #777;
+  font-size: 0.9em;
+}
+
+/* MOBILE LAYOUT */
+@media (max-width: 600px) {
+  .game {
+    grid-template-columns: 1fr;
+  }
+  .game .time {
+    margin-bottom: 4px;
+  }
+}
