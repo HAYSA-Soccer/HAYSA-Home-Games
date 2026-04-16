@@ -1,0 +1,114 @@
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f8f9fb;
+  color: #222;
+  margin: 0;
+  padding: 0;
+}
+
+.schedule {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2em;
+}
+
+.page-title {
+  text-align: center;
+  color: #004080;
+  font-size: 2em;
+  font-weight: 700;
+  margin-bottom: 0.2em;
+}
+
+.subtitle {
+  text-align: center;
+  color: #555;
+  font-size: 1.1em;
+  margin-bottom: 2em;
+}
+
+.day-header {
+  background: #004080;
+  color: white;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  margin-top: 1.5em;
+  font-size: 1.2em;
+}
+
+.section-header {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.4em;
+  color: #333;
+}
+
+.game {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 0.6em 0.6em;
+  border-bottom: 1px solid #ddd;
+}
+
+.game .time {
+  font-weight: 600;
+  width: 90px;
+}
+
+.game .team {
+  flex: 1;
+  font-weight: 500;
+}
+
+.game .opponent {
+  flex: 1;
+  color: #004080;
+}
+
+.game .location {
+  flex: 1;
+  font-style: italic;
+  color: #555;
+}
+
+.game.home {
+  background: #e8f4ff;
+}
+
+.game.away {
+  background: #fff8e8;
+}
+
+.crest {
+  height: 28px;
+  width: 28px;
+  margin-right: 8px;
+  border-radius: 4px;
+  object-fit: contain;
+}
+
+.no-games {
+  font-style: italic;
+  color: #777;
+  padding-left: 0.6em;
+}
+
+.last-updated {
+  margin-top: 2em;
+  text-align: center;
+  color: #777;
+  font-size: 0.9em;
+}
+
+@media (max-width: 600px) {
+  .game {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .game .time {
+    width: auto;
+    margin-bottom: 4px;
+  }
+}
