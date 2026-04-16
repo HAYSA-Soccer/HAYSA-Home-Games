@@ -9,17 +9,23 @@ import pytz
 # ICS FETCH (DIRECT, NO CLOUDFLARE)
 # ---------------------------------------------------------
 
+import requests
+
 ICAL_URL = "https://calendar.teamsideline.com/ical?d=vseBS5X6j9qQXmVOavlTZkdNQFag+DgzH/UkvFJa2mpTE5JTsKoabQ=="
 
-response = requests.get(ICAL_URL)
+headers = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+}
+
+response = requests.get(ICAL_URL, headers=headers)
 response.raise_for_status()
 calendar_data = response.text
 
-# Optional: write dump for debugging
 with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
 
 calendar = Calendar(calendar_data)
+
 
 # ---------------------------------------------------------
 # TIMEZONE HELPERS
