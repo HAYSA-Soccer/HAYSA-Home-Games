@@ -157,10 +157,14 @@ for event in calendar.events:
     clean_left = re.sub(r"\(.*?\)", "", left).strip()
     clean_right = re.sub(r"\(.*?\)", "", right).strip()
 
+    # CLEAN OPPONENT NAMES BEFORE DETECTION
+    clean_left_opp = re.sub(r"\(.*?\)", "", left).strip().upper()
+    clean_right_opp = re.sub(r"\(.*?\)", "", right).strip().upper()
+
     left_is_hay = is_holbrook_team(clean_left)
     right_is_hay = is_holbrook_team(clean_right)
-    left_is_opp = is_opponent(left)
-    right_is_opp = is_opponent(right)
+    left_is_opp = is_opponent(clean_left_opp)
+    right_is_opp = is_opponent(clean_right_opp)
 
     is_travel = (
         (left_is_hay and right_is_opp) or
@@ -194,7 +198,7 @@ for event in calendar.events:
         "normalized_location": normalize_field_name(location),
         "time": time_str,
         "time_str": time_str,
-        "start_dt": start,   # <-- ADDED
+        "start_dt": start,
         "is_home": is_home,
         "crest": crest,
     }
@@ -268,18 +272,16 @@ def render_day_block(date_str, home_games, away_games):
     html = [f'<div class="day-block">']
     html.append(f'<h2 class="day-header">📅 {date_str}</h2>')
 
-    # Home section
     html.append('<div class="section-header">🏠 Home Games</div>')
     if home_games:
-        for g in sorted(home_games, key=lambda x: x["start_dt"]):  # <-- FIXED
+        for g in sorted(home_games, key=lambda x: x["start_dt"]):
             html.append(render_game(g, "home"))
     else:
         html.append('<div class="no-games">No home games listed.</div>')
 
-    # Away section
     html.append('<div class="section-header">🚐 Away Games</div>')
     if away_games:
-        for g in sorted(away_games, key=lambda x: x["start_dt"]):  # <-- FIXED
+        for g in sorted(away_games, key=lambda x: x["start_dt"]):
             html.append(render_game(g, "away"))
     else:
         html.append('<div class="no-games">No away games listed.</div>')
