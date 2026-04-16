@@ -97,9 +97,10 @@ hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 # ---------------------------------------------------------
 
 HOLBROOK_TRAVEL_PATTERN = re.compile(
-    r"^\s*\d+(?:/\d+)*(?:/PG)?\s+(Boys|Girls)\b",
+    r"^\s*\d+(?:/\d+)*(?:/PG)?\s+(Boys|Girls)\b.*",
     re.IGNORECASE
 )
+
 
 def is_holbrook_team(text):
     return bool(HOLBROOK_TRAVEL_PATTERN.match(text.strip()))
