@@ -6,7 +6,10 @@ from collections import defaultdict
 import pytz
 import re
 
-# --- Timezone helpers ---
+# ---------------------------------------------------------
+# TIMEZONE HELPERS
+# ---------------------------------------------------------
+
 def to_eastern(dt):
     eastern = pytz.timezone("US/Eastern")
     if dt.tzinfo is None:
@@ -14,70 +17,36 @@ def to_eastern(dt):
     return dt.astimezone(eastern)
 
 
-# --- ICS DOWNLOAD WITH FULL BROWSER SPOOFING ---
+# ---------------------------------------------------------
+# ICS DOWNLOAD WITH BROWSER SPOOFING
+# ---------------------------------------------------------
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 ICAL_URL = "http://tmsdln.com/19hyx"
 
-BROWSER_HEADERS = {
+HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/123.0.0.0 Safari/537.36"
     ),
-    "Accept": (
-        "text/html,application/xhtml+xml,application/xml;"
-        "q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,"
-        "application/signed-exchange;v=b3;q=0.7"
-    ),
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "DNT": "1",
+    "Accept": "text/calendar,text/plain,*/*",
 }
 
-session = requests.Session()
-session.headers.update(BROWSER_HEADERS)
-
-response = session.get(ICAL_URL, allow_redirects=True, timeout=30, verify=False)
+response = requests.get(ICAL_URL, headers=HEADERS, timeout=30, verify=False)
 response.raise_for_status()
 
 raw_bytes = response.content
 
-# Try UTF‑8
-try:
-    calendar_data = raw_bytes.decode("utf-8")
-except:
-    calendar_data = ""
-
-# Try Latin‑1
-if "BEGIN:VCALENDAR" not in calendar_data:
+# Try multiple decodings
+for encoding in ["utf-8", "latin-1", "utf-16", "utf-16le", "utf-16be"]:
     try:
-        calendar_data = raw_bytes.decode("latin-1")
+        calendar_data = raw_bytes.decode(encoding)
+        if "BEGIN:VCALENDAR" in calendar_data:
+            break
     except:
-        pass
-
-# Try UTF‑16
-if "BEGIN:VCALENDAR" not in calendar_data:
-    try:
-        calendar_data = raw_bytes.decode("utf-16")
-    except:
-        pass
-
-# Try UTF‑16LE
-if "BEGIN:VCALENDAR" not in calendar_data:
-    try:
-        calendar_data = raw_bytes.decode("utf-16le")
-    except:
-        pass
-
-# Try UTF‑16BE
-if "BEGIN:VCALENDAR" not in calendar_data:
-    try:
-        calendar_data = raw_bytes.decode("utf-16be")
-    except:
-        pass
+        continue
 
 with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
@@ -85,7 +54,10 @@ with open("ics_dump.txt", "w", encoding="utf-8") as dump:
 calendar = Calendar(calendar_data)
 
 
-# --- Field normalization (display only) ---
+# ---------------------------------------------------------
+# FIELD NORMALIZATION
+# ---------------------------------------------------------
+
 field_name_map = {
     "H-HST": "Holbrook High School",
     "Holbrook HS": "Holbrook High School",
@@ -96,9 +68,11 @@ field_name_map = {
     "Sumner Field": "Sean Joyce Field",
     "Holbrook Playground": "Sean Joyce Field",
     "H-SJ4": "Sean Joyce Field",
+    "A-BU1": "Avon Butler Elementary School",
+    "Avon Butler Elementary School": "Avon Butler Elementary School",
 }
 
-def normalize_field_name(location: str) -> str:
+def normalize_field_name(location):
     loc = (location or "").strip()
     for alias, name in field_name_map.items():
         if alias.lower() in loc.lower():
@@ -106,7 +80,10 @@ def normalize_field_name(location: str) -> str:
     return loc
 
 
-# --- Crest Mapping ---
+# ---------------------------------------------------------
+# CREST MAPPING
+# ---------------------------------------------------------
+
 opponent_crests = {
     "ABINGTON": "https://static.wixstatic.com/media/97261c_54471fdb634c4d3fa113fe951de314ef~mv2.png",
     "ACUSHNET": "https://nebula.wsimg.com/d34af03927e1352f5052348865f537ac",
@@ -118,7 +95,6 @@ opponent_crests = {
     "HANSON": "https://whitmanhansonyouthsoccer.org/Portals/19/image001.png",
     "WHITMAN-HANSON": "https://whitmanhansonyouthsoccer.org/Portals/19/image001.png",
     "MARSHFIELD": "https://www.marshfieldsoccer.com/wp-content/uploads/sites/678/2022/05/MYS_Full_Color_Black_White_LizardNeonGreen.png",
-    "MMR": "https://www.marionma.gov/ImageRepository/Document?documentID=72",
     "MIDDLEBORO": "https://images.squarespace-cdn.com/content/v1/5592f956e4b0d217906ce58b/1530823172680-BO9CXY334H3TYWM0M1A6/logo.png",
     "PLYMOUTH": "https://nebula.wsimg.com/78a7bc57d1d03265f333a66707a25638",
     "QUINCY": "https://tse2.mm.bing.net/th/id/OIP.CZdNrzdApKNlAj0QhyKmVAAAAA",
@@ -132,35 +108,39 @@ opponent_crests = {
     "WEYMOUTH": "https://weymouthsite.sportspilot.com/portals/47/Images/WYS%20Logo_small.jpg",
 }
 
+hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 
-# --- Travel / Rec detection patterns ---
+
+# ---------------------------------------------------------
+# TEAM & OPPONENT DETECTION
+# ---------------------------------------------------------
+
 HOLBROOK_TRAVEL_PATTERN = re.compile(
-    r'^\s*\d+(?:/\d+)*(?:/PG)?\s+(?:Boys|Girls)\b',
-    re.IGNORECASE,
+    r"^\s*(\d+(?:/\d+)*(?:/PG)?)\s+(Boys|Girls)\b",
+    re.IGNORECASE
 )
 
-OPPONENT_PATTERN = re.compile(r'^[A-Z][A-Z \-]+$')
-VS_SEPARATOR_PATTERN = re.compile(r'\bvs\.?\b', re.IGNORECASE)
+OPPONENT_PATTERN = re.compile(r"^[A-Z][A-Z \-]+$")
+
+VS_PATTERN = re.compile(r"\bvs\.?\b", re.IGNORECASE)
 
 
-def is_holbrook_travel_team(text: str) -> bool:
+def is_holbrook_team(text):
     return bool(HOLBROOK_TRAVEL_PATTERN.match(text.strip()))
 
 
-def is_travel_opponent(text: str) -> bool:
+def is_opponent(text):
     return bool(OPPONENT_PATTERN.match(text.strip()))
 
 
-def split_teams(summary: str):
-    name = (summary or "").strip()
+def split_teams(name):
+    name = name.strip()
 
-    vs_match = VS_SEPARATOR_PATTERN.search(name)
+    vs_match = VS_PATTERN.search(name)
     if vs_match:
-        sep = "vs"
         left = name[:vs_match.start()].strip()
         right = name[vs_match.end():].strip()
-        if left and right:
-            return left, sep, right
+        return left, "vs", right
 
     if "@" in name:
         left, right = name.split("@", 1)
@@ -169,13 +149,21 @@ def split_teams(summary: str):
     return None, None, None
 
 
-# --- Date Filtering (this week: Monday–Sunday, Eastern) ---
+# ---------------------------------------------------------
+# DATE FILTERING (THIS WEEK)
+# ---------------------------------------------------------
+
 today = datetime.now(pytz.timezone("US/Eastern"))
 this_monday = today - timedelta(days=today.weekday())
 this_sunday = this_monday + timedelta(days=6)
 
 games_by_day = defaultdict(list)
 home_games_by_day = defaultdict(list)
+
+
+# ---------------------------------------------------------
+# PARSE EVENTS
+# ---------------------------------------------------------
 
 for event in calendar.events:
     name = event.name or ""
@@ -190,47 +178,46 @@ for event in calendar.events:
     time_str = start.strftime("%I:%M %p").lstrip("0")
     date_label = start.strftime("%A, %b %d")
 
-    left, separator, right = split_teams(name)
-    if not left or not separator or not right:
+    left, sep, right = split_teams(name)
+    if not left or not sep or not right:
         continue
 
-    left_is_holbrook = is_holbrook_travel_team(left)
-    right_is_holbrook = is_holbrook_travel_team(right)
-    left_is_opponent = is_travel_opponent(left)
-    right_is_opponent = is_travel_opponent(right)
+    left_is_hay = is_holbrook_team(left)
+    right_is_hay = is_holbrook_team(right)
+    left_is_opp = is_opponent(left)
+    right_is_opp = is_opponent(right)
 
     is_travel = (
-        (left_is_holbrook and right_is_opponent) or
-        (right_is_holbrook and left_is_opponent) or
-        (left_is_holbrook and right_is_holbrook)
+        (left_is_hay and right_is_opp) or
+        (right_is_hay and left_is_opp) or
+        (left_is_hay and right_is_hay)
     )
+
     if not is_travel:
         continue
 
-    if separator == "vs":
-        is_home = left_is_holbrook
+    if sep == "vs":
+        is_home = left_is_hay
     else:
-        is_home = right_is_holbrook
+        is_home = right_is_hay
 
-    if left_is_holbrook:
+    if left_is_hay:
         hay_team = left
         opponent = right
     else:
         hay_team = right
         opponent = left
 
-    m = re.search(r'\b([A-Z][A-Z \-]+)\b', opponent)
-    opponent_clean = m.group(1).strip() if m else opponent.strip()
-
-    crest = opponent_crests.get(opponent_clean.upper(), "")
+    opponent_clean = opponent.strip().upper()
+    crest = opponent_crests.get(opponent_clean, "")
 
     game = {
         "team": hay_team,
         "opponent": opponent_clean,
         "location": location.strip(),
+        "normalized_location": normalize_field_name(location),
         "time": time_str,
         "is_home": is_home,
-        "normalized_location": normalize_field_name(location),
         "crest": crest,
     }
 
@@ -239,105 +226,100 @@ for event in calendar.events:
         home_games_by_day[date_label].append(game)
 
 
-def format_last_updated() -> str:
+# ---------------------------------------------------------
+# HTML RENDERING
+# ---------------------------------------------------------
+
+def format_last_updated():
     now = datetime.now(pytz.timezone("US/Eastern"))
     return now.strftime("%A, %B %d, %Y at %I:%M %p %Z")
 
 
-def render_games_section(games_map: dict) -> str:
+def render_games(games_map):
     if not games_map:
         return "<p>No games this week!</p>"
 
-    def parse_label(label: str):
+    def parse_date(label):
         return datetime.strptime(label, "%A, %b %d").replace(year=today.year)
 
-    sections = []
-    for date_label in sorted(games_map.keys(), key=parse_label):
-        games = games_map[date_label]
-        sections.append(f'<h2>📅 {date_label}</h2>')
-        sections.append('<ul class="game-list">')
-        for g in sorted(games, key=lambda x: x["time"]):
-            sections.append(
-                f'<li><strong>{g["time"]}</strong> – ⚽ {g["team"]} vs. {g["opponent"]} '
-                f'{"🏠" if g["is_home"] else "🚌"} – <strong>{g["normalized_location"]}</strong></li>'
+    html = []
+    for date_label in sorted(games_map.keys(), key=parse_date):
+        html.append(f"<h2>📅 {date_label}</h2>")
+        html.append("<ul class='game-list'>")
+
+        for g in sorted(games_map[date_label], key=lambda x: x["time"]):
+            crest_html = f"<img src='{g['crest']}' class='crest'>" if g["crest"] else ""
+            html.append(
+                f"<li><strong>{g['time']}</strong> – "
+                f"<img src='{hayasa_crest}' class='crest'>"
+                f"{g['team']} vs. {g['opponent']} {crest_html} "
+                f"{'🏠' if g['is_home'] else '🚌'} – "
+                f"<strong>{g['normalized_location']}</strong></li>"
             )
-        sections.append("</ul>")
 
-    return "\n".join(sections)
+        html.append("</ul>")
+
+    return "\n".join(html)
 
 
-def render_page(title: str, intro: str, games_map: dict) -> str:
-    last_updated = format_last_updated()
-    games_html = render_games_section(games_map)
-
+def render_page(title, intro, games_map):
     return f"""<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>{title}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <style>
-    body {{
-      font-family: system-ui, sans-serif;
-      margin: 0;
-      padding: 1.5rem;
-      background: #f5f5f5;
-      color: #222;
-    }}
-    .container {{
-      max-width: 800px;
-      margin: 0 auto;
-      background: #ffffff;
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    }}
-    h1 {{
-      margin-top: 0;
-      font-size: 1.6rem;
-    }}
-    h2 {{
-      margin-top: 1.5rem;
-      font-size: 1.2rem;
-      color: #333;
-    }}
-    .game-list {{
-      list-style: none;
-      padding-left: 0;
-    }}
-    .game-list li {{
-      margin: 0.4rem 0;
-    }}
-    .updated {{
-      margin-top: 1.5rem;
-      font-size: 0.85rem;
-      color: #666;
-    }}
-  </style>
+<meta charset="UTF-8">
+<title>{title}</title>
+<style>
+  body {{
+    font-family: system-ui, sans-serif;
+    margin: 0;
+    padding: 1.5rem;
+    background: #f5f5f5;
+  }}
+  .container {{
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }}
+  h1 {{ margin-top: 0; }}
+  .game-list {{ list-style: none; padding-left: 0; }}
+  .game-list li {{ margin: 0.4rem 0; }}
+  img.crest {{ height: 1em; vertical-align: middle; margin: 0 0.3em; }}
+  .updated {{ margin-top: 1.5rem; font-size: 0.85rem; color: #666; }}
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>{title}</h1>
-    <p>{intro}</p>
-    {games_html}
-    <p class="updated">Last updated: {last_updated}</p>
-  </div>
+<div class="container">
+  <h1>{title}</h1>
+  <p>{intro}</p>
+  {render_games(games_map)}
+  <p class="updated">Last updated: {format_last_updated()}</p>
+</div>
 </body>
 </html>
 """
 
 
-home_intro = (
-    "Looking for a quick sideline stop this week? These games are happening right here in Holbrook—"
-    "bring a chair, grab a coffee, and help make the sidelines feel like home!"
+# ---------------------------------------------------------
+# WRITE OUTPUT FILES
+# ---------------------------------------------------------
+
+home_html = render_page(
+    "Holbrook Home Games",
+    "These games are happening right here in Holbrook.",
+    home_games_by_day
 )
-home_html = render_page("Holbrook Home Games", home_intro, home_games_by_day)
+
 with open("home.html", "w", encoding="utf-8") as f:
     f.write(home_html)
 
-all_intro = (
-    "Here are all Holbrook travel games for this week—home and away—so you can follow every team."
+all_html = render_page(
+    "Holbrook Travel Schedule",
+    "All Holbrook travel games this week — home and away.",
+    games_by_day
 )
-all_html = render_page("Holbrook Travel Schedule", all_intro, games_by_day)
+
 with open("all_games.html", "w", encoding="utf-8") as f:
     f.write(all_html)
