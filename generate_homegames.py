@@ -9,8 +9,6 @@ import pytz
 # ICS FETCH (DIRECT, NO CLOUDFLARE)
 # ---------------------------------------------------------
 
-import requests
-
 ICAL_URL = "https://calendar.teamsideline.com/ical?d=vseBS5X6j9qQXmVOavlTZkdNQFag+DgzH/UkvFJa2mpTE5JTsKoabQ=="
 
 headers = {
@@ -25,7 +23,6 @@ with open("ics_dump.txt", "w", encoding="utf-8") as dump:
     dump.write(calendar_data)
 
 calendar = Calendar(calendar_data)
-
 
 # ---------------------------------------------------------
 # TIMEZONE HELPERS
@@ -101,7 +98,6 @@ HOLBROOK_TRAVEL_PATTERN = re.compile(
     re.IGNORECASE
 )
 
-
 def is_holbrook_team(text):
     return bool(HOLBROOK_TRAVEL_PATTERN.match(text.strip()))
 
@@ -157,8 +153,12 @@ for event in calendar.events:
     if not left or not sep or not right:
         continue
 
-    left_is_hay = is_holbrook_team(left)
-    right_is_hay = is_holbrook_team(right)
+    # CLEAN TEAM NAMES BEFORE DETECTION
+    clean_left = re.sub(r"\(.*?\)", "", left).strip()
+    clean_right = re.sub(r"\(.*?\)", "", right).strip()
+
+    left_is_hay = is_holbrook_team(clean_left)
+    right_is_hay = is_holbrook_team(clean_right)
     left_is_opp = is_opponent(left)
     right_is_opp = is_opponent(right)
 
@@ -194,99 +194,17 @@ for event in calendar.events:
         "normalized_location": normalize_field_name(location),
         "time": time_str,
         "time_str": time_str,
+        "start_dt": start,   # <-- ADDED
         "is_home": is_home,
         "crest": crest,
     }
-
 
     games_by_day[date_label].append(game)
     if is_home:
         home_games_by_day[date_label].append(game)
 
 # ---------------------------------------------------------
-# FALLBACK: NEXT UPCOMING GAMES
-# ---------------------------------------------------------
-
-if not games_by_day:
-    future_events = []
-
-    for event in calendar.events:
-        name = event.name or ""
-        if "practice" in name.lower():
-            continue
-
-        start = to_eastern(event.begin.datetime)
-        if start.date() < today.date():
-            continue
-
-        future_events.append((start, event))
-
-    if future_events:
-        future_events.sort(key=lambda x: x[0])
-        first_date = future_events[0][0].strftime("%A, %b %d")
-
-        games_by_day[first_date] = []
-        home_games_by_day[first_date] = []
-
-        for start, event in future_events:
-            if start.strftime("%A, %b %d") != first_date:
-                continue
-
-            name = event.name or ""
-            location = event.location or ""
-            time_str = start.strftime("%I:%M %p").lstrip("0")
-
-            left, sep, right = split_teams(name)
-            if not left or not sep or not right:
-                continue
-
-            left_is_hay = is_holbrook_team(left)
-            right_is_hay = is_holbrook_team(right)
-            left_is_opp = is_opponent(left)
-            right_is_opp = is_opponent(right)
-
-            is_travel = (
-                (left_is_hay and right_is_opp) or
-                (right_is_hay and left_is_opp) or
-                (left_is_hay and right_is_hay)
-            )
-            if not is_travel:
-                continue
-
-            if sep.startswith("v"):
-                is_home = left_is_hay
-            else:
-                is_home = right_is_hay
-
-            if left_is_hay:
-                hay_team = left
-                opponent = right
-            else:
-                hay_team = right
-                opponent = left
-
-            opponent_clean = opponent.strip().upper()
-            crest = opponent_crests.get(opponent_clean, "")
-
-            game = {
-                "team": hay_team,
-                "opponent": opponent_clean,
-                "opponent_display": ("vs. " + opponent_clean) if is_home else ("@ " + opponent_clean),
-                "location": location.strip(),
-                "normalized_location": normalize_field_name(location),
-                "time": time_str,
-                "time_str": time_str,
-                "is_home": is_home,
-                "crest": crest,
-            }
-
-
-            games_by_day[first_date].append(game)
-            if is_home:
-                home_games_by_day[first_date].append(game)
-
-# ---------------------------------------------------------
-# HTML RENDERING (NEW LAYOUT + SHARED CSS + CRESTS)
+# HTML RENDERING
 # ---------------------------------------------------------
 
 def html_header(title):
@@ -314,7 +232,6 @@ def html_footer():
 """
 
 def render_game(g, home_or_away):
-    # Determine home vs away team and crest
     if g["is_home"]:
         home_team = g["team"]
         home_crest = hayasa_crest
@@ -347,10 +264,6 @@ def render_game(g, home_or_away):
     </div>
     """
 
-
-
-
-
 def render_day_block(date_str, home_games, away_games):
     html = [f'<div class="day-block">']
     html.append(f'<h2 class="day-header">📅 {date_str}</h2>')
@@ -358,7 +271,7 @@ def render_day_block(date_str, home_games, away_games):
     # Home section
     html.append('<div class="section-header">🏠 Home Games</div>')
     if home_games:
-        for g in sorted(home_games, key=lambda x: x["time"]):
+        for g in sorted(home_games, key=lambda x: x["start_dt"]):  # <-- FIXED
             html.append(render_game(g, "home"))
     else:
         html.append('<div class="no-games">No home games listed.</div>')
@@ -366,7 +279,7 @@ def render_day_block(date_str, home_games, away_games):
     # Away section
     html.append('<div class="section-header">🚐 Away Games</div>')
     if away_games:
-        for g in sorted(away_games, key=lambda x: x["time"]):
+        for g in sorted(away_games, key=lambda x: x["start_dt"]):  # <-- FIXED
             html.append(render_game(g, "away"))
     else:
         html.append('<div class="no-games">No away games listed.</div>')
