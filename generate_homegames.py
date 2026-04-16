@@ -105,8 +105,21 @@ def is_holbrook_team(text):
 
 def is_opponent(text):
     t = text.strip().upper()
+    t = re.sub(r"\(.*?\)", "", t)  # remove (Green), (Blue), etc.
     t = t.replace("–", "-").replace("—", "-")
-    return any(key in t for key in opponent_crests.keys())
+    t = re.sub(r"\s+", " ", t)
+
+    # Exact match
+    if t in opponent_crests:
+        return True
+
+    # Prefix match (handles "HANOVER U12", "HANOVER (Green)", etc.)
+    for key in opponent_crests.keys():
+        if t.startswith(key):
+            return True
+
+    return False
+
 
 def split_teams(name):
     name = name.strip()
