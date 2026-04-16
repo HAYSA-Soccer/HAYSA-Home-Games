@@ -292,14 +292,14 @@ def render_day_block(date_str, home_games, away_games):
         for g in sorted(home_games, key=lambda x: x["start_dt"]):
             html.append(render_game(g, "home"))
     else:
-        html.append('<div class="no-games">No home games listed.</div>')
+        html.append('<div class="no-games">No home games.</div>')
 
     html.append('<div class="section-header">🚐 Away Games</div>')
     if away_games:
         for g in sorted(away_games, key=lambda x: x["start_dt"]):
             html.append(render_game(g, "away"))
     else:
-        html.append('<div class="no-games">No away games listed.</div>')
+        html.append('<div class="no-games">No away games.</div>')
 
     html.append('</div>')
     return "\n".join(html)
@@ -314,12 +314,24 @@ def generate_home_html(days):
     for date_str in sorted(days.keys(), key=parse_date):
         home_games = [g for g in days[date_str] if g["is_home"]]
         if home_games:
-            html.append(render_day_block(date_str, home_games, []))
+            html.append(render_home_day_block(date_str, home_games))
 
     html.append(html_footer())
 
     with open("home.html", "w", encoding="utf-8") as f:
         f.write("\n".join(html))
+
+def render_home_day_block(date_str, home_games):
+    html = [f'<div class="day-block">']
+    html.append(f'<h2 class="day-header">📅 {date_str}</h2>')
+
+    html.append('<div class="section-header">🏠 Home Games</div>')
+    for g in sorted(home_games, key=lambda x: x["start_dt"]):
+        html.append(render_game(g, "home"))
+
+    html.append('</div>')
+    return "\n".join(html)
+
 
 def generate_all_games_html(days):
     html = [html_header("Holbrook Travel Games")]
