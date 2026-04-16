@@ -313,17 +313,19 @@ def html_footer():
 """
 
 def render_game(g, home_or_away):
-    # Determine home vs away team/crest
+    # Determine home vs away team and crest
     if g["is_home"]:
-        home_crest = hayasa_crest
         home_team = g["team"]
-        away_crest = g["crest"]
+        home_crest = hayasa_crest
+
         away_team = g["opponent"]
+        away_crest = g["crest"]
     else:
-        home_crest = g["crest"]
         home_team = g["opponent"]
-        away_crest = hayasa_crest
+        home_crest = g["crest"]
+
         away_team = g["team"]
+        away_crest = hayasa_crest
 
     home_crest_html = f"<img class='crest' src='{home_crest}'>" if home_crest else ""
     away_crest_html = f"<img class='crest' src='{away_crest}'>" if away_crest else ""
@@ -343,6 +345,7 @@ def render_game(g, home_or_away):
       <span class="location">{g['normalized_location']}</span>
     </div>
     """
+
 
 
 
