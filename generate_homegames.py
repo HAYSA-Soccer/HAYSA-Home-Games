@@ -4,6 +4,35 @@ from ics import Calendar
 from datetime import datetime, timedelta
 from collections import defaultdict
 import pytz
+import csv
+from io import StringIO
+
+def load_crest_map_from_google_sheet(sheet_csv_url):
+    """
+    Downloads the Town Crests sheet as CSV and returns:
+    { "TOWN": "https://drive.google.com/uc?export=view&id=<FILE_ID>" }
+    """
+    response = requests.get(sheet_csv_url)
+    response.raise_for_status()
+
+    csv_data = response.text
+    reader = csv.DictReader(StringIO(csv_data))
+
+    crest_map = {}
+
+    for row in reader:
+        town = row["Town"].strip().upper()
+        filename = row["CrestFile"].strip()
+
+        # Build a Drive URL that works for <img src="">
+        crest_url = f"https://drive.google.com/uc?export=view&file={filename}"
+
+        crest_map[town] = crest_url
+
+    return crest_map
+
+
+
 
 # ---------------------------------------------------------
 # ICS FETCH (DIRECT, NO CLOUDFLARE)
@@ -63,31 +92,10 @@ def normalize_field_name(location):
 # CREST MAPPING
 # ---------------------------------------------------------
 
-opponent_crests = {
-    "ABINGTON": "https://static.wixstatic.com/media/97261c_54471fdb634c4d3fa113fe951de314ef~mv2.png",
-    "ACUSHNET": "https://nebula.wsimg.com/d34af03927e1352f5052348865f537ac",
-    "BRAINTREE": "https://tse4.mm.bing.net/th/id/OIP.8mgnbl-_HFeJrpvFPBck9AHaHa",
-    "BRIDGEWATER": "https://www.bridgewateryouthsoccer.com/Portals/4899/logo/logo636223303834986882.png",
-    "COHASSET": "https://tse3.mm.bing.net/th/id/OIP.GGHkIzybTl-3dbqcY51nVAHaJj",
-    "EAST BRIDGEWATER": "https://www.ebysa.com/Portals/57/EBYSA%20Web%20Heading%20Narrow%20Large.png",
-    "EASTON": "https://cdn1.sportngin.com/attachments/call_to_action/4dc7-210934873/EYSL_Ball_large.png",
-    "HANSON": "https://whitmanhansonyouthsoccer.org/Portals/19/image001.png",
-    "WHITMAN-HANSON": "http://whitmanhansonyouthsoccer.org/Portals/19/image001.png?ver=MY_OEzOjTRl4maigQFKbVg%3d%3d",
-    "MARSHFIELD": "https://www.marshfieldsoccer.com/wp-content/uploads/sites/678/2022/05/MYS_Full_Color_Black_White_LizardNeonGreen.png",
-    "MIDDLEBORO": "https://images.squarespace-cdn.com/content/v1/5592f956e4b0d217906ce58b/1530823172680-BO9CXY334H3TYWM0M1A6/logo.png",
-    "PLYMOUTH": "https://nebula.wsimg.com/78a7bc57d1d03265f333a66707a25638",
-    "QUINCY": "https://tse2.mm.bing.net/th/id/OIP.CZdNrzdApKNlAj0QhyKmVAAAAA",
-    "RANDOLPH": "https://randolphyouthsoccer.org/sites/default/files/randolph-new.png",
-    "RAYNHAM": "https://raynhamsoccer.com/wp-content/uploads/2023/02/RAYNHAM-LOGO.png",
-    "ROCKLAND": "https://tse1.mm.bing.net/th/id/OIP.624YgOq0bVdVkfJOolTAmgAAAA",
-    "SHARON": "https://images.squarespace-cdn.com/content/v1/66a28a811406ea11d1e561df/4f0e039a-9230-4471-982b-0e549d47727d/SSA_Logo_Transparent.png",
-    "SILVER LAKE": "https://image.maxpreps.io/school-mascot/a/3/d/a3d4d72f-2659-4933-9947-94149c2a5b0b.gif",
-    "STOUGHTON": "https://stoughtonsoccer.org/Portals/68/logo_transparent.png",
-    "WEST BRIDGEWATER": "https://www.wbyaa.com/Portals/52208/logo638573245926682379.png",
-    "WEYMOUTH": "https://weymouthsite.sportspilot.com/portals/47/Images/WYS%20Logo_small.jpg",
-    "HANOVER": "https://cdn4.sportngin.com/attachments/call_to_action/eca2-187898068/CleanShot_2023-04-06_at_14.19.53_2x_large.png",
+SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/1TElu-ZV_7M-AyA3qbL0ALfugszYj5KiE7gf-grb-FP4/export?format=csv&gid=0"
 
-}   
+opponent_crests = load_crest_map_from_google_sheet(SHEET_CSV_URL)
+ 
 
 hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 
