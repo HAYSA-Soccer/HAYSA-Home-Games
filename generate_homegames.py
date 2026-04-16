@@ -116,37 +116,34 @@ hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 # ---------------------------------------------------------
 
 HOLBROOK_TRAVEL_PATTERN = re.compile(
-    r"^\s*(\d+(?:/\d+)*(?:/PG)?)\s+(Boys|Girls)\b",
+    r"^\s*\d+(?:/\d+)*(?:/PG)?\s+(Boys|Girls)\b",
     re.IGNORECASE
 )
-
-OPPONENT_PATTERN = re.compile(r"^[A-Z][A-Z \-]+$")
-
-VS_PATTERN = re.compile(r"\bvs\.?\b", re.IGNORECASE)
-
 
 def is_holbrook_team(text):
     return bool(HOLBROOK_TRAVEL_PATTERN.match(text.strip()))
 
 
 def is_opponent(text):
-    return bool(OPPONENT_PATTERN.match(text.strip()))
+    t = text.strip().upper()
+    t = t.replace("–", "-").replace("—", "-")
+    return any(key in t for key in opponent_crests.keys())
 
 
 def split_teams(name):
     name = name.strip()
+    name = name.replace("\u00A0", " ")  # NBSP
+    name = name.replace("–", "-").replace("—", "-")
 
-    vs_match = VS_PATTERN.search(name)
-    if vs_match:
-        left = name[:vs_match.start()].strip()
-        right = name[vs_match.end():].strip()
-        return left, "vs", right
+    match = re.search(r"\b(vs?|VS?)[\.\s]*\b|@", name)
+    if not match:
+        return None, None, None
 
-    if "@" in name:
-        left, right = name.split("@", 1)
-        return left.strip(), "@", right.strip()
+    sep = match.group(0).strip().lower()
+    left = name[:match.start()].strip()
+    right = name[match.end():].strip()
 
-    return None, None, None
+    return left, sep, right
 
 
 # ---------------------------------------------------------
@@ -196,7 +193,7 @@ for event in calendar.events:
     if not is_travel:
         continue
 
-    if sep == "vs":
+    if sep.startswith("v"):
         is_home = left_is_hay
     else:
         is_home = right_is_hay
@@ -224,6 +221,86 @@ for event in calendar.events:
     games_by_day[date_label].append(game)
     if is_home:
         home_games_by_day[date_label].append(game)
+
+
+# ---------------------------------------------------------
+# FALLBACK: If no games this week, show next upcoming games
+# ---------------------------------------------------------
+
+if not games_by_day:
+    future_events = []
+
+    for event in calendar.events:
+        name = event.name or ""
+        if "practice" in name.lower():
+            continue
+
+        start = to_eastern(event.begin.datetime)
+        if start.date() < today.date():
+            continue
+
+        future_events.append((start, event))
+
+    if future_events:
+        future_events.sort(key=lambda x: x[0])
+        first_date = future_events[0][0].strftime("%A, %b %d")
+
+        games_by_day[first_date] = []
+        home_games_by_day[first_date] = []
+
+        for start, event in future_events:
+            if start.strftime("%A, %b %d") != first_date:
+                continue
+
+            name = event.name or ""
+            location = event.location or ""
+            time_str = start.strftime("%I:%M %p").lstrip("0")
+
+            left, sep, right = split_teams(name)
+            if not left or not sep or not right:
+                continue
+
+            left_is_hay = is_holbrook_team(left)
+            right_is_hay = is_holbrook_team(right)
+            left_is_opp = is_opponent(left)
+            right_is_opp = is_opponent(right)
+
+            is_travel = (
+                (left_is_hay and right_is_opp) or
+                (right_is_hay and left_is_opp) or
+                (left_is_hay and right_is_hay)
+            )
+            if not is_travel:
+                continue
+
+            if sep.startswith("v"):
+                is_home = left_is_hay
+            else:
+                is_home = right_is_hay
+
+            if left_is_hay:
+                hay_team = left
+                opponent = right
+            else:
+                hay_team = right
+                opponent = left
+
+            opponent_clean = opponent.strip().upper()
+            crest = opponent_crests.get(opponent_clean, "")
+
+            game = {
+                "team": hay_team,
+                "opponent": opponent_clean,
+                "location": location.strip(),
+                "normalized_location": normalize_field_name(location),
+                "time": time_str,
+                "is_home": is_home,
+                "crest": crest,
+            }
+
+            games_by_day[first_date].append(game)
+            if is_home:
+                home_games_by_day[first_date].append(game)
 
 
 # ---------------------------------------------------------
