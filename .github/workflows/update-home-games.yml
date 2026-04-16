@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout repo with write access
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
@@ -27,11 +27,36 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install Playwright + Python deps
+        run: |
+          pip install playwright
+          playwright install chromium
+          pip install -r requirements.txt
+
+      - name: Download ICS using real browser
+        run: |
+          python3 - << 'EOF'
+          from playwright.sync_api import sync_playwright
+          import os
+
+          url = "http://tmsdln.com/19hyx"
+          save_path = os.path.join(os.environ["GITHUB_WORKSPACE"], "schedule.ics")
+
+          with sync_playwright() as p:
+              browser = p.chromium.launch()
+              page = browser.new_page()
+
+              with page.expect_download() as download_info:
+                  page.goto(url)
+
+              download = download_info.value
+              download.save_as(save_path)
+
+              browser.close()
+          EOF
 
       - name: Run Python script
-        run: python generate_homegames.py
+        run: python3 generate_homegames.py
 
       - name: Configure Git
         run: |
@@ -45,7 +70,7 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add home.html all_games.html .gitignore
+          git add home.html all_games.html .gitignore schedule.ics
           git diff --cached --quiet || git commit -m "Auto-update home games for $(date +'%Y-%m-%d')"
 
       - name: Push changes
