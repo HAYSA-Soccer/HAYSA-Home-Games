@@ -298,7 +298,11 @@ def render_games(games_map):
         html.append(f"<h2>📅 {date_label}</h2>")
         html.append("<ul class='game-list'>")
 
-        for g in sorted(games_map[date_label], key=lambda x: x["time"]):
+        for g in sorted(
+            games_map[date_label],
+            key=lambda x: (not x["is_home"], x["time"])
+        ):
+
             crest_html = f"<img src='{g['crest']}' class='crest'>" if g["crest"] else ""
             html.append(
                 f"<li><strong>{g['time']}</strong> – "
