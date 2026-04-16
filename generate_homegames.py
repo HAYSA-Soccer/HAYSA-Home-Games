@@ -312,17 +312,21 @@ def html_footer():
 </html>
 """
 
-def render_game(g, home_or_away):
-    crest_html = f"<img class='crest' src='{g['crest']}'>" if g.get("crest") else ""
+ddef render_game(g, home_or_away):
+    haycrest_html = f"<img class='crest' src='{hayasa_crest}'>"
+    oppcrest_html = f"<img class='crest' src='{g['crest']}'>" if g.get("crest") else ""
+
     return f"""
     <div class="game {home_or_away}">
-      {crest_html}
+      {haycrest_html}
+      {oppcrest_html}
       <span class="time">{g['time_str']}</span>
       <span class="team">{g['team']}</span>
       <span class="opponent">{g['opponent_display']}</span>
       <span class="location">{g['normalized_location']}</span>
     </div>
     """
+
 
 def render_day_block(date_str, home_games, away_games):
     html = [f'<div class="day-block">']
