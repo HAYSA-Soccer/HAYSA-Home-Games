@@ -328,6 +328,7 @@ def render_game(g, home_or_away):
     """
 
 
+
 def render_day_block(date_str, home_games, away_games):
     html = [f'<div class="day-block">']
     html.append(f'<h2 class="day-header">📅 {date_str}</h2>')
