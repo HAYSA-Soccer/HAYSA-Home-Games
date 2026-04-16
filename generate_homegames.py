@@ -279,100 +279,106 @@ if not games_by_day:
                 home_games_by_day[first_date].append(game)
 
 # ---------------------------------------------------------
-# HTML RENDERING
+# HTML RENDERING (NEW LAYOUT + SHARED CSS + CRESTS)
 # ---------------------------------------------------------
 
-def format_last_updated():
-    now = datetime.now(pytz.timezone("US/Eastern"))
-    return now.strftime("%A, %B %d, %Y at %I:%M %p %Z")
-
-def render_games(games_map):
-    if not games_map:
-        return "<p>No games this week!</p>"
-
-    def parse_date(label):
-        return datetime.strptime(label, "%A, %b %d").replace(year=today.year)
-
-    html = []
-    for date_label in sorted(games_map.keys(), key=parse_date):
-        html.append(f"<h2>📅 {date_label}</h2>")
-        html.append("<ul class='game-list'>")
-
-        for g in sorted(
-            games_map[date_label],
-            key=lambda x: (not x["is_home"], x["time"])
-        ):
-
-            crest_html = f"<img src='{g['crest']}' class='crest'>" if g["crest"] else ""
-            html.append(
-                f"<li><strong>{g['time']}</strong> – "
-                f"<img src='{hayasa_crest}' class='crest'>"
-                f"{g['team']} vs. {g['opponent']} {crest_html} "
-                f"{'🏠' if g['is_home'] else '🚌'} – "
-                f"<strong>{g['normalized_location']}</strong></li>"
-            )
-
-        html.append("</ul>")
-
-    return "\n".join(html)
-
-def render_page(title, intro, games_map):
+def html_header(title):
     return f"""<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <title>{title}</title>
-<style>
-  body {{
-    font-family: system-ui, sans-serif;
-    margin: 0;
-    padding: 1.5rem;
-    background: #f5f5f5;
-  }}
-  .container {{
-    max-width: 800px;
-    margin: 0 auto;
-    background: white;
-    padding: 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-  }}
-  h1 {{ margin-top: 0; }}
-  .game-list {{ list-style: none; padding-left: 0; }}
-  .game-list li {{ margin: 0.4rem 0; }}
-  img.crest {{ height: 1em; vertical-align: middle; margin: 0 0.3em; }}
-  .updated {{ margin-top: 1.5rem; font-size: 0.85rem; color: #666; }}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
-  <h1>{title}</h1>
-  <p>{intro}</p>
-  {render_games(games_map)}
-  <p class="updated">Last updated: {format_last_updated()}</p>
+<div class="schedule">
+<h1 class="page-title">{title}</h1>
+"""
+
+def html_footer():
+    now = datetime.now(pytz.timezone("US/Eastern"))
+    stamp = now.strftime("%A, %B %d, %Y at %I:%M %p %Z")
+    return f"""
+<div class="last-updated">Last updated: {stamp}</div>
 </div>
 </body>
 </html>
 """
 
+def render_game(g, home_or_away):
+    crest_html = f"<img class='crest' src='{g['crest']}'>" if g.get("crest") else ""
+    return f"""
+    <div class="game {home_or_away}">
+      {crest_html}
+      <span class="time">{g['time_str']}</span>
+      <span class="team">{g['team']}</span>
+      <span class="opponent">{g['opponent_display']}</span>
+      <span class="location">{g['normalized_location']}</span>
+    </div>
+    """
+
+def render_day_block(date_str, home_games, away_games):
+    html = [f'<div class="day-block">']
+    html.append(f'<h2 class="day-header">📅 {date_str}</h2>')
+
+    # Home section
+    html.append('<div class="section-header">🏠 Home Games</div>')
+    if home_games:
+        for g in sorted(home_games, key=lambda x: x["time"]):
+            html.append(render_game(g, "home"))
+    else:
+        html.append('<div class="no-games">No home games listed.</div>')
+
+    # Away section
+    html.append('<div class="section-header">🚐 Away Games</div>')
+    if away_games:
+        for g in sorted(away_games, key=lambda x: x["time"]):
+            html.append(render_game(g, "away"))
+    else:
+        html.append('<div class="no-games">No away games listed.</div>')
+
+    html.append('</div>')
+    return "\n".join(html)
+
+def generate_home_html(days):
+    html = [html_header("Holbrook Home Games")]
+    html.append('<p class="subtitle">These games are happening right here in Holbrook.</p>')
+
+    def parse_date(label):
+        return datetime.strptime(label, "%A, %b %d").replace(year=today.year)
+
+    for date_str in sorted(days.keys(), key=parse_date):
+        home_games = [g for g in days[date_str] if g["is_home"]]
+        if home_games:
+            html.append(render_day_block(date_str, home_games, []))
+
+    html.append(html_footer())
+
+    with open("home.html", "w", encoding="utf-8") as f:
+        f.write("\n".join(html))
+
+def generate_all_games_html(days):
+    html = [html_header("Holbrook Travel Games")]
+    html.append('<p class="subtitle">All Holbrook travel games this week — home and away.</p>')
+
+    def parse_date(label):
+        return datetime.strptime(label, "%A, %b %d").replace(year=today.year)
+
+    for date_str in sorted(days.keys(), key=parse_date):
+        games = days[date_str]
+        home_games = [g for g in games if g["is_home"]]
+        away_games = [g for g in games if not g["is_home"]]
+        html.append(render_day_block(date_str, home_games, away_games))
+
+    html.append(html_footer())
+
+    with open("all_games.html", "w", encoding="utf-8") as f:
+        f.write("\n".join(html))
+
 # ---------------------------------------------------------
 # WRITE OUTPUT FILES
 # ---------------------------------------------------------
 
-home_html = render_page(
-    "Holbrook Home Games",
-    "These games are happening right here in Holbrook.",
-    home_games_by_day
-)
-
-with open("home.html", "w", encoding="utf-8") as f:
-    f.write(home_html)
-
-all_html = render_page(
-    "Holbrook Travel Schedule",
-    "All Holbrook travel games this week — home and away.",
-    games_by_day
-)
-
-with open("all_games.html", "w", encoding="utf-8") as f:
-    f.write(all_html)
+generate_home_html(games_by_day)
+generate_all_games_html(games_by_day)
