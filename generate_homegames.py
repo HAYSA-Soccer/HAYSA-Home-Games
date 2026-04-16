@@ -188,12 +188,15 @@ for event in calendar.events:
     game = {
         "team": hay_team,
         "opponent": opponent_clean,
+        "opponent_display": ("vs. " + opponent_clean) if is_home else ("@ " + opponent_clean),
         "location": location.strip(),
         "normalized_location": normalize_field_name(location),
         "time": time_str,
+        "time_str": time_str,
         "is_home": is_home,
         "crest": crest,
     }
+
 
     games_by_day[date_label].append(game)
     if is_home:
@@ -267,12 +270,15 @@ if not games_by_day:
             game = {
                 "team": hay_team,
                 "opponent": opponent_clean,
+                "opponent_display": ("vs. " + opponent_clean) if is_home else ("@ " + opponent_clean),
                 "location": location.strip(),
                 "normalized_location": normalize_field_name(location),
                 "time": time_str,
+                "time_str": time_str,
                 "is_home": is_home,
                 "crest": crest,
             }
+
 
             games_by_day[first_date].append(game)
             if is_home:
