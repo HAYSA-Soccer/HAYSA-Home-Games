@@ -5,7 +5,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 11 * * *'   # 11:00 UTC daily
+    - cron: '0 11 * * *'
   workflow_dispatch:
 
 jobs:
@@ -13,49 +13,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo with write access
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - name: Pull latest changes FIRST
+      - name: Pull latest changes
         run: git pull origin main
+
+      - name: Download ICS (reliable curl method)
+        run: |
+          curl -L "http://tmsdln.com/19hyx" -o schedule.ics
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install Playwright + Python deps
-        run: |
-          pip install playwright
-          playwright install chromium
-          pip install -r requirements.txt
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: Download ICS using real browser
-        run: |
-          python3 - << 'EOF'
-          from playwright.sync_api import sync_playwright
-          import os
-
-          url = "http://tmsdln.com/19hyx"
-          save_path = os.path.join(os.environ["GITHUB_WORKSPACE"], "schedule.ics")
-
-          with sync_playwright() as p:
-              browser = p.chromium.launch()
-              page = browser.new_page()
-
-              with page.expect_download() as download_info:
-                  page.goto(url)
-
-              download = download_info.value
-              download.save_as(save_path)
-
-              browser.close()
-          EOF
-
-      - name: Run Python script
+      - name: Run generator
         run: python3 generate_homegames.py
 
       - name: Configure Git
@@ -63,7 +42,7 @@ jobs:
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
 
-      - name: Remove ics_dump.txt from tracking and ignore it
+      - name: Ignore dump file
         run: |
           git rm --cached ics_dump.txt || true
           echo "ics_dump.txt" >> .gitignore
