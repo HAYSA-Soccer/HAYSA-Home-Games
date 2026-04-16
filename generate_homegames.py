@@ -1,10 +1,8 @@
-import requests
+import re
 from ics import Calendar
 from datetime import datetime, timedelta
-import ssl
 from collections import defaultdict
 import pytz
-import re
 
 # ---------------------------------------------------------
 # TIMEZONE HELPERS
@@ -18,38 +16,11 @@ def to_eastern(dt):
 
 
 # ---------------------------------------------------------
-# ICS DOWNLOAD WITH BROWSER SPOOFING
+# READ ICS DOWNLOADED BY PLAYWRIGHT
 # ---------------------------------------------------------
 
-ssl._create_default_https_context = ssl._create_unverified_context
-
-ICAL_URL = "http://tmsdln.com/19hyx"
-
-HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/123.0.0.0 Safari/537.36"
-    ),
-    "Accept": "text/calendar,text/plain,*/*",
-}
-
-response = requests.get(ICAL_URL, headers=HEADERS, timeout=30, verify=False)
-response.raise_for_status()
-
-raw_bytes = response.content
-
-# Try multiple decodings
-for encoding in ["utf-8", "latin-1", "utf-16", "utf-16le", "utf-16be"]:
-    try:
-        calendar_data = raw_bytes.decode(encoding)
-        if "BEGIN:VCALENDAR" in calendar_data:
-            break
-    except:
-        continue
-
-with open("ics_dump.txt", "w", encoding="utf-8") as dump:
-    dump.write(calendar_data)
+with open("schedule.ics", "r", encoding="utf-8", errors="ignore") as f:
+    calendar_data = f.read()
 
 calendar = Calendar(calendar_data)
 
@@ -123,12 +94,10 @@ HOLBROOK_TRAVEL_PATTERN = re.compile(
 def is_holbrook_team(text):
     return bool(HOLBROOK_TRAVEL_PATTERN.match(text.strip()))
 
-
 def is_opponent(text):
     t = text.strip().upper()
     t = t.replace("–", "-").replace("—", "-")
     return any(key in t for key in opponent_crests.keys())
-
 
 def split_teams(name):
     name = name.strip()
