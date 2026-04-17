@@ -37,7 +37,7 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add index.html travel.html ics_dump.txt
+          git add home.html all_games.html ics_dump.txt
           git diff --cached --quiet || git commit -m "Auto-update home games for $(date +'%Y-%m-%d')"
 
       - name: Pull latest changes
