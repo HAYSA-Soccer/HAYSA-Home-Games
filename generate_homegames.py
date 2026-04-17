@@ -318,8 +318,8 @@ def render_day_block(date_str, home_games, away_games):
     return "\n".join(html)
 
 def generate_home_html(days):
-    html = [html_header("Holbrook Home Games")]
-    html.append('<p class="subtitle">These games are happening right here in Holbrook.</p>')
+    html = [html_header("Holbrook Avon Youth SoccerTravel Home Games")]
+    html.append('<p class="subtitle">These games are happening right here in Holbrook & Avon.</p>')
     
     # Add link to full schedule
     html.append('<p style="text-align:center; margin-top:-1em;">')
@@ -354,8 +354,8 @@ def render_home_day_block(date_str, home_games):
 
 
 def generate_all_games_html(days):
-    html = [html_header("Holbrook Travel Games")]
-    html.append('<p class="subtitle">All Holbrook travel games this week — home and away.</p>')
+    html = [html_header("Holbrook Avon Youth Soccer Travel Games")]
+    html.append('<p class="subtitle">All Holbrook Avon Youth Soccer travel games this week — home and away.</p>')
 
     def parse_date(label):
         return datetime.strptime(label, "%A, %b %d").replace(year=today.year)
