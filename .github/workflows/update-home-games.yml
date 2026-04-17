@@ -40,7 +40,7 @@ jobs:
 
       - name: Commit changes
         run: |
-          git add home.html all_games.html ics_dump.txt
+          git add home.html all_games.html
           git diff --cached --quiet || git commit -m "Auto-update home games for $(date +'%Y-%m-%d')"
 
       - name: Push changes
