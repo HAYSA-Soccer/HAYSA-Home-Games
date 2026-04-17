@@ -1,0 +1,51 @@
+name: Sync crest images from Drive
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * *"
+a
+jobs:
+  sync-crests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-auth google-auth-httplib2 google-api-python-client requests
+
+      - name: Download crest mapping CSV
+        run: |
+          CSV_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vRu2yQBMvIYVuK7f7SdHkRHbexYLTKRiQoGe0mHtb7QRHQWZc0ekbabhrbGn9gI02zBywIFNQjnon9h/pub?gid=0&single=true&output=csv"
+          curl -L "$CSV_URL" -o crest_mapping.csv
+
+      - name: Run crest sync script
+        env:
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+        run: python scripts/sync_crests.py
+
+      - name: Commit and push changes (if any)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add assets/crests || true
+
+          if git diff --cached --quiet; then
+            echo "No crest changes to commit."
+          else
+            git commit -m "Sync crest images from Google Drive"
+            git push
+          fi
