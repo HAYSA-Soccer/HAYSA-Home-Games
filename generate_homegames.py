@@ -318,7 +318,7 @@ def render_day_block(date_str, home_games, away_games):
     return "\n".join(html)
 
 def generate_home_html(days):
-    html = [html_header("Holbrook Avon Youth SoccerTravel Home Games")]
+    html = [html_header("Holbrook Avon Youth Soccer Travel Home Games")]
     html.append('<p class="subtitle">These games are happening right here in Holbrook & Avon.</p>')
     
     # Add link to full schedule
