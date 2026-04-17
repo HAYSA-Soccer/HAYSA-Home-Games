@@ -1,3 +1,4 @@
+import os
 import re
 import requests
 from ics import Calendar
@@ -83,6 +84,11 @@ def normalize_field_name(location):
         if alias.lower() in loc.lower():
             return name
     return loc
+
+def get_local_crest(opponent_name):
+    slug = opponent_name.strip().upper().replace(" ", "_")
+    path = f"assets/crests/{slug}.png"
+    return path if os.path.exists(path) else ""
 
 # ---------------------------------------------------------
 # CREST MAPPING
@@ -209,7 +215,8 @@ for event in calendar.events:
         opponent = left
 
     opponent_clean = opponent.strip().upper()
-    crest = opponent_crests.get(opponent_clean, "")
+    crest = get_local_crest(opponent_clean)
+
 
     game = {
         "team": hay_team,
