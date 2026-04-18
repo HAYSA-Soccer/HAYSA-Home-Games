@@ -188,19 +188,14 @@ for event in calendar.events:
     clean_left_opp = re.sub(r"\(.*?\)", "", left).strip().upper()
     clean_right_opp = re.sub(r"\(.*?\)", "", right).strip().upper()
 
-    left_is_hay = is_holbrook_team(clean_left)
-    right_is_hay = is_holbrook_team(clean_right)
-    left_is_opp = is_opponent(clean_left_opp)
-    right_is_opp = is_opponent(clean_right_opp)
+    left_is_hay = is_holbrook_team(left)
+    right_is_hay = is_holbrook_team(right)
 
-    is_travel = (
-        (left_is_hay and right_is_opp) or
-        (right_is_hay and left_is_opp) or
-        (left_is_hay and right_is_hay)
-    )
+     # NEW LOGIC:
+     # A game is valid if EITHER side is a Holbrook travel team.
+     if not (left_is_hay or right_is_hay):
+         continue
 
-    if not is_travel:
-        continue
 
     if sep.startswith("v"):
         is_home = left_is_hay
