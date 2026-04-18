@@ -191,10 +191,10 @@ for event in calendar.events:
     left_is_hay = is_holbrook_team(left)
     right_is_hay = is_holbrook_team(right)
 
-     # NEW LOGIC:
-     # A game is valid if EITHER side is a Holbrook travel team.
-     if not (left_is_hay or right_is_hay):
-         continue
+    # NEW LOGIC:
+    # A game is valid if EITHER side is a Holbrook travel team.
+    if not (left_is_hay or right_is_hay):
+        continue
 
 
     if sep.startswith("v"):
