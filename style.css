@@ -121,3 +121,31 @@ body {
     margin-bottom: 4px;
   }
 }
+
+/* -----------------------------------------
+   LOCATION COLOR CODING
+   ----------------------------------------- */
+
+.game .location {
+  font-weight: 600;
+}
+
+/* Holbrook High School */
+.loc-holbrook-high-school .location {
+  color: #0047b3;        /* deep blue */
+}
+
+/* Avon Butler Elementary School */
+.loc-avon-butler-elementary-school .location {
+  color: #cc5500;        /* warm orange */
+}
+
+/* Brookville Park */
+.loc-brookville-park .location {
+  color: #008844;        /* green */
+}
+
+/* Sean Joyce / Sumner Field */
+.loc-sean-joyce-field .location {
+  color: #7a0099;        /* purple */
+}
