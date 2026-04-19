@@ -259,6 +259,7 @@ def html_footer():
 """
 
 def render_game(g, home_or_away):
+    # Determine home/away teams and crests
     if g["is_home"]:
         home_team = g["team"]
         home_crest = hayasa_crest
@@ -272,11 +273,15 @@ def render_game(g, home_or_away):
         away_team = g["team"]
         away_crest = hayasa_crest
 
+    # Crest HTML
     home_crest_html = f"<img class='crest' src='{home_crest}'>" if home_crest else ""
     away_crest_html = f"<img class='crest' src='{away_crest}'>" if away_crest else ""
 
+    # Generate a CSS-safe slug from normalized location
+    loc_slug = re.sub(r'[^a-z0-9]+', '-', g['normalized_location'].lower()).strip('-')
+
     return f"""
-    <div class="game {home_or_away}">
+    <div class="game {home_or_away} loc-{loc_slug}">
       <span class="time">{g['time_str']}</span>
 
       {home_crest_html}
@@ -290,6 +295,7 @@ def render_game(g, home_or_away):
       <span class="location">{g['normalized_location']}</span>
     </div>
     """
+
 
 def render_day_block(date_str, home_games, away_games):
     html = [f'<div class="day-block">']
