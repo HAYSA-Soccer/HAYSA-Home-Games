@@ -65,6 +65,7 @@ body {
 
 
 
+
 .game .time {
   font-weight: 600;
 }
@@ -169,4 +170,23 @@ body {
 
 .loc-sean-joyce-field .location {
   color: #7a0099;
+}
+
+@media (max-width: 780px) {
+  .game {
+    grid-template-columns:
+      70px 28px 1fr 20px 28px 1fr;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "time homecrest hometeam vs awaycrest awayteam"
+      ". . location location location location";
+  }
+
+  .game .time       { grid-area: time; }
+  .home-crest       { grid-area: homecrest; }
+  .home-team        { grid-area: hometeam; }
+  .opponent         { grid-area: vs; }
+  .away-crest       { grid-area: awaycrest; }
+  .away-team        { grid-area: awayteam; }
+  .location         { grid-area: location; }
 }
