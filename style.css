@@ -67,20 +67,25 @@ body {
   font-weight: 600;
 }
 
-.game .team {
-  font-weight: 500;
+/* ============================================================
+   CLEAN, NON-WRAPPING TEXT WITH ELLIPSIS
+   ============================================================ */
+.team,
+.location {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.game .opponent {
+.opponent {
+  white-space: nowrap;
   color: #004080;
   text-align: center;
 }
 
-.game .location {
-  font-style: italic;
-  color: #555;
-}
-
+/* ============================================================
+   HOME / AWAY BACKGROUND COLORS
+   ============================================================ */
 .game.home {
   background: #e8f4ff;
 }
@@ -104,10 +109,6 @@ body {
 /* ============================================================
    SEMANTIC COLUMN MAPPING FOR AWAY GAMES
    ============================================================ */
-
-/* Default (home games): columns already correct */
-
-/* Away games: flip home/away sides */
 .game.away .home-crest { grid-column: 5; }
 .game.away .home-team  { grid-column: 6; }
 
@@ -148,47 +149,22 @@ body {
 /* ============================================================
    LOCATION COLOR CODING
    ============================================================ */
-
 .game .location {
   font-weight: 600;
 }
 
-/* Holbrook High School */
 .loc-holbrook-high-school .location {
   color: #0047b3;
 }
 
-/* Avon Butler Elementary School */
 .loc-avon-butler-elementary-school .location {
   color: #cc5500;
 }
 
-/* Brookville Park */
 .loc-brookville-park .location {
   color: #008844;
 }
 
-/* Sean Joyce / Sumner Field */
 .loc-sean-joyce-field .location {
   color: #7a0099;
 }
-
-/* FORCE GRID INSIDE TEAMSIdELINE */
-.game {
-  display: grid !important;
-  grid-template-columns:
-      90px
-      32px
-      1fr
-      40px
-      32px
-      1fr
-      1.5fr !important;
-}
-
-.team, .location {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
