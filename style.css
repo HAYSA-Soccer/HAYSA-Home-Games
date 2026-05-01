@@ -68,6 +68,22 @@ body {
 .game .opponent  { grid-column: 4; }
 .game .location  { grid-column: 7; }
 
+/* Tighten row height and vertically center everything */
+.game {
+  padding: 0.4em 0.6em;
+}
+
+.game span {
+  line-height: 1.1;
+}
+
+.game img.crest {
+  align-self: center;
+}
+
+.game > * {
+  align-self: center;
+}
 
 
 /* ============================================================
