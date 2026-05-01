@@ -172,3 +172,23 @@ body {
 .loc-sean-joyce-field .location {
   color: #7a0099;
 }
+
+/* FORCE GRID INSIDE TEAMSIdELINE */
+.game {
+  display: grid !important;
+  grid-template-columns:
+      90px
+      32px
+      1fr
+      40px
+      32px
+      1fr
+      1.5fr !important;
+}
+
+.team, .location {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
