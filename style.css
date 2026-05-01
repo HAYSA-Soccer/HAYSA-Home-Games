@@ -52,11 +52,11 @@ body {
   grid-template-columns:
       70px      /* time */
       28px      /* home crest */
-      1.6fr     /* home team */
+      2fr     /* home team */
       20px      /* vs. */
       28px      /* away crest */
-      1.6fr     /* away team */
-      2.2fr;    /* location */
+      2fr     /* away team */
+      2.5fr;    /* location */
   gap: 8px;
   align-items: center;
   padding: 0.6em 0.6em;
@@ -81,7 +81,7 @@ body {
 }
 
 .opponent {
-  white-space: nowrap;
+  white-space: nowrap;f
   color: #004080;
   text-align: center;
 }
