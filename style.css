@@ -45,39 +45,38 @@ body {
 }
 
 /* ============================================================
-   GRID LAYOUT FOR GAME ROWS (BALANCED VERSION)
+   GRID LAYOUT FOR GAME ROWS (SIMPLE, ONE-LINE)
    ============================================================ */
 .game {
   display: grid;
   grid-template-columns:
-      70px      /* time */
-      28px      /* home crest */
-      2fr     /* home team */
-      20px      /* vs. */
-      28px      /* away crest */
-      2fr     /* away team */
-      2.5fr;    /* location */
+      80px      /* time */
+      32px      /* home crest */
+      1.3fr     /* home team */
+      40px      /* vs. */
+      32px      /* away crest */
+      1.3fr     /* away team */
+      1.8fr;    /* location */
   gap: 8px;
   align-items: center;
   padding: 0.6em 0.6em;
   border-bottom: 1px solid #ddd;
 }
 
-
-
-
 .game .time {
   font-weight: 600;
 }
 
 /* ============================================================
-   CLEAN, NON-WRAPPING TEXT WITH ELLIPSIS
+   TEXT STYLING (NO ELLIPSIS)
    ============================================================ */
-.team,
+.team {
+  font-weight: 500;
+}
+
 .location {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-style: italic;
+  color: #555;
 }
 
 .opponent {
@@ -138,7 +137,7 @@ body {
 }
 
 /* ============================================================
-   MOBILE LAYOUT
+   MOBILE LAYOUT (JUST STACK EVERYTHING)
    ============================================================ */
 @media (max-width: 600px) {
   .game {
@@ -170,23 +169,4 @@ body {
 
 .loc-sean-joyce-field .location {
   color: #7a0099;
-}
-
-@media (max-width: 1000px) {
-  .game {
-    grid-template-columns:
-      70px 28px 1fr 20px 28px 1fr;
-    grid-template-rows: auto auto;
-    grid-template-areas:
-      "time homecrest hometeam vs awaycrest awayteam"
-      ". . location location location location";
-  }
-
-  .game .time       { grid-area: time; }
-  .home-crest       { grid-area: homecrest; }
-  .home-team        { grid-area: hometeam; }
-  .opponent         { grid-area: vs; }
-  .away-crest       { grid-area: awaycrest; }
-  .away-team        { grid-area: awayteam; }
-  .location         { grid-area: location; }
 }
