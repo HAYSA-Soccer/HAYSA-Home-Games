@@ -44,7 +44,9 @@ body {
   color: #333;
 }
 
-/* GRID LAYOUT FOR GAME ROWS */
+/* ============================================================
+   GRID LAYOUT FOR GAME ROWS
+   ============================================================ */
 .game {
   display: grid;
   grid-template-columns:
@@ -54,7 +56,7 @@ body {
       40px      /* vs. */
       32px      /* away crest */
       1fr       /* away team */
-      1.5fr;      /* location */
+      1.5fr;    /* location */
   gap: 8px;
   align-items: center;
   padding: 0.6em 0.6em;
@@ -87,7 +89,9 @@ body {
   background: #fff8e8;
 }
 
-/* CREST IMAGES */
+/* ============================================================
+   CREST IMAGES
+   ============================================================ */
 .crest,
 .game img.crest {
   width: 28px;
@@ -97,14 +101,31 @@ body {
   object-fit: contain;
 }
 
-/* NO GAMES MESSAGE */
+/* ============================================================
+   SEMANTIC COLUMN MAPPING FOR AWAY GAMES
+   ============================================================ */
+
+/* Default (home games): columns already correct */
+
+/* Away games: flip home/away sides */
+.game.away .home-crest { grid-column: 5; }
+.game.away .home-team  { grid-column: 6; }
+
+.game.away .away-crest { grid-column: 2; }
+.game.away .away-team  { grid-column: 3; }
+
+/* ============================================================
+   NO GAMES MESSAGE
+   ============================================================ */
 .no-games {
   font-style: italic;
   color: #777;
   padding-left: 0.6em;
 }
 
-/* LAST UPDATED FOOTER */
+/* ============================================================
+   LAST UPDATED FOOTER
+   ============================================================ */
 .last-updated {
   margin-top: 2em;
   text-align: center;
@@ -112,7 +133,9 @@ body {
   font-size: 0.9em;
 }
 
-/* MOBILE LAYOUT */
+/* ============================================================
+   MOBILE LAYOUT
+   ============================================================ */
 @media (max-width: 600px) {
   .game {
     grid-template-columns: 1fr;
@@ -122,9 +145,9 @@ body {
   }
 }
 
-/* -----------------------------------------
+/* ============================================================
    LOCATION COLOR CODING
-   ----------------------------------------- */
+   ============================================================ */
 
 .game .location {
   font-weight: 600;
@@ -132,20 +155,20 @@ body {
 
 /* Holbrook High School */
 .loc-holbrook-high-school .location {
-  color: #0047b3;        /* deep blue */
+  color: #0047b3;
 }
 
 /* Avon Butler Elementary School */
 .loc-avon-butler-elementary-school .location {
-  color: #cc5500;        /* warm orange */
+  color: #cc5500;
 }
 
 /* Brookville Park */
 .loc-brookville-park .location {
-  color: #008844;        /* green */
+  color: #008844;
 }
 
 /* Sean Joyce / Sumner Field */
 .loc-sean-joyce-field .location {
-  color: #7a0099;        /* purple */
+  color: #7a0099;
 }
