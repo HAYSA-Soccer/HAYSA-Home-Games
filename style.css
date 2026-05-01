@@ -63,6 +63,13 @@ body {
   border-bottom: 1px solid #ddd;
 }
 
+/* Explicit column placement for all rows */
+.game .time      { grid-column: 1; }
+.game .opponent  { grid-column: 4; }
+.game .location  { grid-column: 7; }
+
+
+
 .game .time {
   font-weight: 600;
 }
