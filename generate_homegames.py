@@ -273,9 +273,13 @@ def render_game(g, home_or_away):
         away_team = g["team"]
         away_crest = hayasa_crest
 
-    # Crest HTML
-    home_crest_html = f"<img class='crest' src='{home_crest}'>" if home_crest else ""
-    away_crest_html = f"<img class='crest' src='{away_crest}'>" if away_crest else ""
+    # Crest HTML with semantic classes
+    home_crest_html = (
+        f"<img class='crest home-crest' src='{home_crest}'>" if home_crest else ""
+    )
+    away_crest_html = (
+        f"<img class='crest away-crest' src='{away_crest}'>" if away_crest else ""
+    )
 
     # Generate a CSS-safe slug from normalized location
     loc_slug = re.sub(r'[^a-z0-9]+', '-', g['normalized_location'].lower()).strip('-')
@@ -285,16 +289,17 @@ def render_game(g, home_or_away):
       <span class="time">{g['time_str']}</span>
 
       {home_crest_html}
-      <span class="team">{home_team}</span>
+      <span class="team home-team">{home_team}</span>
 
       <span class="opponent">vs.</span>
 
       {away_crest_html}
-      <span class="team">{away_team}</span>
+      <span class="team away-team">{away_team}</span>
 
       <span class="location">{g['normalized_location']}</span>
     </div>
     """
+
 
 
 def render_day_block(date_str, home_games, away_games):
