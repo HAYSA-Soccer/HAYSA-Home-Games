@@ -50,18 +50,19 @@ body {
 .game {
   display: grid;
   grid-template-columns:
-      85px      /* time */
-      32px      /* home crest */
-      1.2fr     /* home team */
-      38px      /* vs. */
-      32px      /* away crest */
-      1.2fr     /* away team */
-      1.6fr;    /* location */
+      70px      /* time */
+      28px      /* home crest */
+      1.4fr     /* home team */
+      20px      /* vs. */
+      28px      /* away crest */
+      1.4fr     /* away team */
+      2fr;      /* location */
   gap: 8px;
   align-items: center;
   padding: 0.6em 0.6em;
   border-bottom: 1px solid #ddd;
 }
+
 
 .game .time {
   font-weight: 600;
