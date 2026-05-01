@@ -50,16 +50,16 @@ body {
 .game {
   display: grid;
   grid-template-columns:
-      80px      /* time */
-      32px      /* home crest */
-      1.3fr     /* home team */
-      40px      /* vs. */
-      32px      /* away crest */
-      1.3fr     /* away team */
-      1.8fr;    /* location */
+      80px
+      32px
+      1.3fr
+      40px
+      32px
+      1.3fr
+      1.8fr;
   gap: 8px;
   align-items: center;
-  padding: 0.6em 0.6em;
+  padding: 0.4em 0.6em;   /* your tightened padding */
   border-bottom: 1px solid #ddd;
 }
 
@@ -67,12 +67,6 @@ body {
 .game .time      { grid-column: 1; }
 .game .opponent  { grid-column: 4; }
 .game .location  { grid-column: 7; }
-
-/* Tighten row height and vertically center everything */
-.game {
-  padding: 0.4em 0.6em;
-  align-items: center;   /* <-- THIS is the missing piece */
-}
 
 
 .game span {
