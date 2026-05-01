@@ -172,7 +172,7 @@ body {
   color: #7a0099;
 }
 
-@media (max-width: 780px) {
+@media (max-width: 1000px) {
   .game {
     grid-template-columns:
       70px 28px 1fr 20px 28px 1fr;
