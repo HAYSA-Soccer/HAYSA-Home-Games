@@ -71,7 +71,9 @@ body {
 /* Tighten row height and vertically center everything */
 .game {
   padding: 0.4em 0.6em;
+  align-items: center;   /* <-- THIS is the missing piece */
 }
+
 
 .game span {
   line-height: 1.1;
