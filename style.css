@@ -130,13 +130,16 @@ body {
 }
 
 /* ============================================================
-   SEMANTIC COLUMN MAPPING FOR AWAY GAMES
+   COMPLETE COLUMN MAPPING FOR AWAY GAMES
    ============================================================ */
-.game.away .home-crest { grid-column: 5; }
-.game.away .home-team  { grid-column: 6; }
-
+.game.away .time       { grid-column: 1; }
 .game.away .away-crest { grid-column: 2; }
 .game.away .away-team  { grid-column: 3; }
+.game.away .opponent   { grid-column: 4; }
+.game.away .home-crest { grid-column: 5; }
+.game.away .home-team  { grid-column: 6; }
+.game.away .location   { grid-column: 7; }
+
 
 /* ============================================================
    NO GAMES MESSAGE
