@@ -271,21 +271,41 @@ def render_game(g, home_or_away):
         away_team = g["team"]
         away_crest = hayasa_crest
 
-    home_crest_html = f"<img class='crest home-crest' src='{home_crest}'>" if home_crest else ""
-    away_crest_html = f"<img class='crest away-crest' src='{away_crest}'>" if away_crest else ""
+    home_crest_html = (
+        f"<img class='crest home-crest' src='{home_crest}'>"
+        if home_crest
+        else "<span class='crest placeholder'></span>"
+    )
+
+    away_crest_html = (
+        f"<img class='crest away-crest' src='{away_crest}'>"
+        if away_crest
+        else "<span class='crest placeholder'></span>"
+    )
 
     loc_slug = re.sub(r'[^a-z0-9]+', '-', g['normalized_location'].lower()).strip('-')
+
     return (
-        f"<div class='game {home_or_away} loc-{loc_slug}'>"
-        f"<span class='time'>{g['time_str']}</span>"
-        f"{home_crest_html}"
-        f"<span class='team home-team'>{home_team}</span>"
-        f"<span class='opponent'>vs.</span>"
-        f"{away_crest_html}"
-        f"<span class='team away-team'>{away_team}</span>"
-        f"<span class='location'>{g['normalized_location']}</span>"
-        f"</div>"
+        "<div class='game {cls} loc-{loc}'>"
+        "<span class='time'>{time}</span>"
+        "{home_crest}"
+        "<span class='team home-team'>{home_team}</span>"
+        "<span class='opponent'>vs.</span>"
+        "{away_crest}"
+        "<span class='team away-team'>{away_team}</span>"
+        "<span class='location'>{loc_name}</span>"
+        "</div>"
+    ).format(
+        cls=home_or_away,
+        loc=loc_slug,
+        time=g["time_str"],
+        home_crest=home_crest_html,
+        home_team=home_team,
+        away_crest=away_crest_html,
+        away_team=away_team,
+        loc_name=g["normalized_location"]
     )
+
 
 
 
