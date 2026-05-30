@@ -73,7 +73,29 @@ async def scrape_cancellations():
                     if not is_cancelled:
                         continue  # we only store cancelled games
 
-                    key = f"{date_norm} | {time_norm} | {home_norm} | {away_norm}"
+                    from datetime import datetime
+
+                    # Convert "Sat 5/30" → "Saturday, May 30"
+                    date_ics = date_norm  # fallback
+                    
+                    try:
+                        parts = date_norm.split()
+                        if len(parts) == 2:
+                            dow, md = parts
+                            month, day = md.split("/")
+                            month = int(month)
+                            day = int(day)
+                    
+                            now = datetime.now()
+                            dt = datetime(now.year, month, day)
+                    
+                            date_ics = dt.strftime("%A, %b %d")
+                    except Exception as e:
+                        print(f"  Date parse failed for '{date_norm}': {e}")
+
+                    
+                    key = f"{date_ics} | {time_norm} | {home_norm} | {away_norm}"
+
                     cancellations[key] = True
 
             except Exception as e:
