@@ -1,0 +1,46 @@
+name: Scrape HAYSA cancellations
+
+on:
+  schedule:
+    - cron: "0 * * * *"      # every hour
+  workflow_dispatch:          # manual trigger
+  push:
+    paths:
+      - "scrape_cancellations.py"
+      - ".github/workflows/scrape_cancellations.yml"
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt || true
+          pip install playwright
+          python -m playwright install --with-deps chromium
+
+      - name: Run cancellation scraper
+        run: python scrape_cancellations.py
+
+      - name: Commit cancellations.json (if changed)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if git status --porcelain | grep -q "cancellations.json"; then
+            git config user.name "actions-user"
+            git config user.email "actions@github.com"
+            git add cancellations.json
+            git commit -m "Auto-update cancellations.json"
+            git push
+          else
+            echo "No changes to cancellations.json"
+          fi
