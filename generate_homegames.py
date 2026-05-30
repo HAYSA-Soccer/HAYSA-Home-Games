@@ -8,6 +8,23 @@ import pytz
 import csv
 from io import StringIO
 
+# ---------------------------------------------------------
+# LOAD CANCELLATIONS
+# ---------------------------------------------------------
+import json
+
+try:
+    with open("cancellations.json", "r", encoding="utf-8") as f:
+        cancellation_data = json.load(f)
+        cancellations = cancellation_data.get("cancellations", {})
+except FileNotFoundError:
+    print("WARNING: cancellations.json not found — assuming no cancellations.")
+    cancellations = {}
+
+# ---------------------------------------------------------
+# CREST MAP FROM GOOGLE SHEET
+# ---------------------------------------------------------
+
 def load_crest_map_from_google_sheet(sheet_csv_url):
     response = requests.get(sheet_csv_url)
     response.raise_for_status()
@@ -20,19 +37,13 @@ def load_crest_map_from_google_sheet(sheet_csv_url):
     for row in reader:
         town = row["Town"].strip().upper()
         file_id = row["FileID"].strip()
-
         crest_url = f"https://drive.google.com/uc?export=view&id={file_id}"
-
         crest_map[town] = crest_url
 
     return crest_map
 
-
-
-
-
 # ---------------------------------------------------------
-# ICS FETCH (DIRECT, NO CLOUDFLARE)
+# ICS FETCH
 # ---------------------------------------------------------
 
 ICAL_URL = "https://calendar.teamsideline.com/ical?d=vseBS5X6j9qQXmVOavlTZkdNQFag+DgzH/UkvFJa2mpTE5JTsKoabQ=="
@@ -118,21 +129,18 @@ def is_holbrook_team(text):
 
 def is_opponent(text):
     t = text.strip().upper()
-    t = re.sub(r"\(.*?\)", "", t)  # remove (Green), (Blue), etc.
+    t = re.sub(r"\(.*?\)", "", t)
     t = t.replace("–", "-").replace("—", "-")
     t = re.sub(r"\s+", " ", t)
 
-    # Exact match
     if t in opponent_crests:
         return True
 
-    # Prefix match (handles "HANOVER U12", "HANOVER (Green)", etc.)
     for key in opponent_crests.keys():
         if t.startswith(key):
             return True
 
     return False
-
 
 def split_teams(name):
     name = name.strip()
@@ -181,22 +189,11 @@ for event in calendar.events:
     if not left or not sep or not right:
         continue
 
-    # CLEAN TEAM NAMES BEFORE DETECTION
-    clean_left = re.sub(r"\(.*?\)", "", left).strip()
-    clean_right = re.sub(r"\(.*?\)", "", right).strip()
-
-    # CLEAN OPPONENT NAMES BEFORE DETECTION
-    clean_left_opp = re.sub(r"\(.*?\)", "", left).strip().upper()
-    clean_right_opp = re.sub(r"\(.*?\)", "", right).strip().upper()
-
     left_is_hay = is_holbrook_team(left)
     right_is_hay = is_holbrook_team(right)
 
-    # NEW LOGIC:
-    # A game is valid if EITHER side is a Holbrook travel team.
     if not (left_is_hay or right_is_hay):
         continue
-
 
     if sep.startswith("v"):
         is_home = left_is_hay
@@ -213,6 +210,16 @@ for event in calendar.events:
     opponent_clean = opponent.strip().upper()
     crest = get_local_crest(opponent_clean)
 
+    # Determine home/away for cancellation key
+    if is_home:
+        home_team = hay_team
+        away_team = opponent
+    else:
+        home_team = opponent
+        away_team = hay_team
+
+    # Build cancellation key
+    key = f"{date_label} | {time_str} | {home_team} | {away_team}"
 
     game = {
         "team": hay_team,
@@ -225,6 +232,7 @@ for event in calendar.events:
         "start_dt": start,
         "is_home": is_home,
         "crest": crest,
+        "cancelled": cancellations.get(key, False),
     }
 
     games_by_day[date_label].append(game)
@@ -273,20 +281,18 @@ def render_game(g, home_or_away):
 
     home_crest_html = (
         f"<img class='crest home-crest' src='{home_crest}'>"
-        if home_crest
-        else "<span class='crest placeholder'></span>"
+        if home_crest else "<span class='crest placeholder'></span>"
     )
 
     away_crest_html = (
         f"<img class='crest away-crest' src='{away_crest}'>"
-        if away_crest
-        else "<span class='crest placeholder'></span>"
+        if away_crest else "<span class='crest placeholder'></span>"
     )
 
     loc_slug = re.sub(r'[^a-z0-9]+', '-', g['normalized_location'].lower()).strip('-')
 
     return (
-        "<div class='game {cls} loc-{loc}'>"
+        "<div class='game {cls}{cancelled_cls} loc-{loc}'>"
         "<span class='time'>{time}</span>"
         "{home_crest}"
         "<span class='team home-team'>{home_team}</span>"
@@ -294,21 +300,20 @@ def render_game(g, home_or_away):
         "{away_crest}"
         "<span class='team away-team'>{away_team}</span>"
         "<span class='location'>{loc_name}</span>"
+        "{cancel_badge}"
         "</div>"
     ).format(
         cls=home_or_away,
+        cancelled_cls=" cancelled" if g.get("cancelled") else "",
         loc=loc_slug,
         time=g["time_str"],
         home_crest=home_crest_html,
         home_team=home_team,
         away_crest=away_crest_html,
         away_team=away_team,
-        loc_name=g["normalized_location"]
+        loc_name=g["normalized_location"],
+        cancel_badge="<span class='badge cancelled'>Cancelled</span>" if g.get("cancelled") else "",
     )
-
-
-
-
 
 def render_day_block(date_str, home_games, away_games):
     html = [f'<div class="day-block">']
@@ -334,13 +339,10 @@ def render_day_block(date_str, home_games, away_games):
 def generate_home_html(days):
     html = [html_header("Holbrook Avon Youth Soccer Travel Home Games")]
     html.append('<p class="subtitle">These games are happening right here in Holbrook & Avon.</p>')
-    
-    # Add link to full schedule
+
     html.append('<p style="text-align:center; margin-top:-1em;">')
     html.append('<a href="all_games.html" style="color:#004080; font-weight:600;">See all travel games (home & away)</a>')
     html.append('</p>')
-
-
 
     def parse_date(label):
         return datetime.strptime(label, "%A, %b %d").replace(year=today.year)
@@ -365,7 +367,6 @@ def render_home_day_block(date_str, home_games):
 
     html.append('</div>')
     return "\n".join(html)
-
 
 def generate_all_games_html(days):
     html = [html_header("Holbrook Avon Youth Soccer Travel Games")]
