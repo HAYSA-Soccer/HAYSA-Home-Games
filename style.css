@@ -217,3 +217,47 @@ body {
     vertical-align: middle;
   }
 }
+
+/* ============================================================
+   CANCELLED GAME STYLING
+   ============================================================ */
+
+.game.cancelled {
+  opacity: 0.55;
+  text-decoration: line-through;
+  color: #b30000;
+  border-left: 6px solid #b30000;
+  padding-left: 10px;
+}
+
+/* Red badge next to cancelled games */
+.badge.cancelled {
+  background: #b30000;
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+  font-size: 0.75em;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Make the time stand out when cancelled */
+.game.cancelled .time {
+  color: #b30000;
+  font-weight: 700;
+}
+
+/* Crest images dimmed for cancelled games */
+.game.cancelled img.crest {
+  filter: grayscale(100%) brightness(70%);
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .game.cancelled {
+    border-left-width: 4px;
+    padding-left: 8px;
+  }
+}
+
