@@ -127,21 +127,6 @@ HOLBROOK_TRAVEL_PATTERN = re.compile(
 def is_holbrook_team(text):
     return bool(HOLBROOK_TRAVEL_PATTERN.match(text.strip()))
 
-def is_opponent(text):
-    t = text.strip().upper()
-    t = re.sub(r"\(.*?\)", "", t)
-    t = t.replace("–", "-").replace("—", "-")
-    t = re.sub(r"\s+", " ", t)
-
-    if t in opponent_crests:
-        return True
-
-    for key in opponent_crests.keys():
-        if t.startswith(key):
-            return True
-
-    return False
-
 def split_teams(name):
     name = name.strip()
     name = name.replace("\u00A0", " ")
