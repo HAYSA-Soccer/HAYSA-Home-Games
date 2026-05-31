@@ -158,6 +158,10 @@ def normalize_time(t):
 
 for event in calendar.events:
     name = event.name or ""
+    # Normalize cancelled ICS titles
+    name_clean = name.replace("CANCELLED:", "").replace("(Cancelled)", "").replace("- CANCELLED", "")
+    name_clean = name_clean.strip()
+
     if "practice" in name.lower():
         continue
 
@@ -170,7 +174,7 @@ for event in calendar.events:
     t_norm = normalize_time(time_str)
     date_label = start.strftime("%A, %b %d")
 
-    left, sep, right = split_teams(name)
+    left, sep, right = split_teams(name_clean)
     if not left or not sep or not right:
         continue
 
