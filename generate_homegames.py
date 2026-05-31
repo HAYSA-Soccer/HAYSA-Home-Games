@@ -153,6 +153,9 @@ games_by_day = defaultdict(list)
 # PARSE EVENTS
 # ---------------------------------------------------------
 
+def normalize_time(t):
+    return t.replace(" ", "").upper()
+
 for event in calendar.events:
     name = event.name or ""
     if "practice" in name.lower():
@@ -164,6 +167,7 @@ for event in calendar.events:
 
     location = event.location or ""
     time_str = start.strftime("%I:%M %p").lstrip("0")
+    t_norm = normalize_time(time_str)
     date_label = start.strftime("%A, %b %d")
 
     left, sep, right = split_teams(name)
@@ -197,14 +201,14 @@ for event in calendar.events:
     crest = get_local_crest(opponent_clean)
 
     # ---------------------------------------------------------
-    # RAW CANCELLATION KEY LOGIC (THE FIX)
+    # RAW CANCELLATION KEY LOGIC + NORMALIZED TIME
     # ---------------------------------------------------------
 
     raw_left = left.strip()
     raw_right = right.strip()
 
-    key1 = f"{date_label} | {time_str} | {raw_left} | {raw_right}"
-    key2 = f"{date_label} | {time_str} | {raw_right} | {raw_left}"
+    key1 = f"{date_label} | {t_norm} | {raw_left} | {raw_right}"
+    key2 = f"{date_label} | {t_norm} | {raw_right} | {raw_left}"
 
     is_cancelled = cancellations.get(key1, False) or cancellations.get(key2, False)
 
