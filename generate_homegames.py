@@ -174,7 +174,12 @@ for event in calendar.events:
     t_norm = normalize_time(time_str)
     date_label = start.strftime("%A, %b %d")
 
+    left_raw, sep_raw, right_raw = split_teams(name)
     left, sep, right = split_teams(name_clean)
+    
+    # Use raw separator for home/away logic
+    sep_clean = sep_raw.lower().strip()
+
     if not left or not sep or not right:
         continue
 
