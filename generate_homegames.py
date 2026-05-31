@@ -7,11 +7,11 @@ from collections import defaultdict
 import pytz
 import csv
 from io import StringIO
+import json
 
 # ---------------------------------------------------------
 # LOAD CANCELLATIONS
 # ---------------------------------------------------------
-import json
 
 try:
     with open("cancellations.json", "r", encoding="utf-8") as f:
@@ -110,9 +110,6 @@ SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRu2yQBMvIYVuK7
 
 opponent_crests = load_crest_map_from_google_sheet(SHEET_CSV_URL)
 
-print("CREST MAP LOADED:")
-print(opponent_crests)
-
 hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 
 # ---------------------------------------------------------
@@ -151,7 +148,6 @@ this_monday = today - timedelta(days=today.weekday())
 this_sunday = this_monday + timedelta(days=6)
 
 games_by_day = defaultdict(list)
-home_games_by_day = defaultdict(list)
 
 # ---------------------------------------------------------
 # PARSE EVENTS
@@ -180,11 +176,16 @@ for event in calendar.events:
     if not (left_is_hay or right_is_hay):
         continue
 
-    if sep.startswith("v"):
+    # Determine home/away
+    sep_clean = sep.lower().strip()
+    if sep_clean.startswith("v"):
         is_home = left_is_hay
-    else:
+    elif sep_clean.startswith("@") or sep_clean == "at":
         is_home = right_is_hay
+    else:
+        is_home = left_is_hay
 
+    # Determine hay team and opponent
     if left_is_hay:
         hay_team = left
         opponent = right
@@ -195,21 +196,23 @@ for event in calendar.events:
     opponent_clean = opponent.strip().upper()
     crest = get_local_crest(opponent_clean)
 
-    # Determine home/away for cancellation key
-    if is_home:
-        home_team = hay_team
-        away_team = opponent
-    else:
-        home_team = opponent
-        away_team = hay_team
+    # ---------------------------------------------------------
+    # RAW CANCELLATION KEY LOGIC (THE FIX)
+    # ---------------------------------------------------------
 
-    # Build cancellation key
-    key = f"{date_label} | {time_str} | {home_team} | {away_team}"
+    raw_left = left.strip()
+    raw_right = right.strip()
+
+    key1 = f"{date_label} | {time_str} | {raw_left} | {raw_right}"
+    key2 = f"{date_label} | {time_str} | {raw_right} | {raw_left}"
+
+    is_cancelled = cancellations.get(key1, False) or cancellations.get(key2, False)
+
+    # ---------------------------------------------------------
 
     game = {
         "team": hay_team,
         "opponent": opponent_clean,
-        "opponent_display": ("vs. " + opponent_clean) if is_home else ("@ " + opponent_clean),
         "location": location.strip(),
         "normalized_location": normalize_field_name(location),
         "time": time_str,
@@ -217,12 +220,10 @@ for event in calendar.events:
         "start_dt": start,
         "is_home": is_home,
         "crest": crest,
-        "cancelled": cancellations.get(key, False),
+        "cancelled": is_cancelled,
     }
 
     games_by_day[date_label].append(game)
-    if is_home:
-        home_games_by_day[date_label].append(game)
 
 # ---------------------------------------------------------
 # HTML RENDERING
