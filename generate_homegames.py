@@ -175,10 +175,19 @@ for event in calendar.events:
     t_norm = normalize_time(time_str)
     date_label = start.strftime("%A, %b %d")
 
-    # Parse raw separator for home/away
+    # ---------------------------------------------------------
+    # FIX: allow cancelled ICS events to parse even if separator missing
+    # ---------------------------------------------------------
+
     left_raw, sep_raw, right_raw = split_teams(raw_name)
+    is_ics_cancelled = "cancel" in raw_name.lower()
+
     if not left_raw or not sep_raw or not right_raw:
-        continue
+        if is_ics_cancelled:
+            left_raw, sep_raw, right_raw = split_teams(name_clean)
+
+        if not left_raw or not sep_raw or not right_raw:
+            continue
 
     # Parse cleaned name for cancellation matching
     left, sep, right = split_teams(name_clean)
