@@ -43,7 +43,7 @@ def load_crest_map_from_google_sheet(sheet_csv_url):
     return crest_map
 
 # ---------------------------------------------------------
-# ICS FETCH
+# ICS FETCH (DIRECT, NO CLOUDFLARE)
 # ---------------------------------------------------------
 
 ICAL_URL = "https://calendar.teamsideline.com/ical?d=vseBS5X6j9qQXmVOavlTZkdNQFag+DgzH/UkvFJa2mpTE5JTsKoabQ=="
@@ -110,6 +110,9 @@ SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRu2yQBMvIYVuK7
 
 opponent_crests = load_crest_map_from_google_sheet(SHEET_CSV_URL)
 
+print("CREST MAP LOADED:")
+print(opponent_crests)
+
 hayasa_crest = "https://d2jqoimos5um40.cloudfront.net/site_1563/162dca.png"
 
 # ---------------------------------------------------------
@@ -123,6 +126,21 @@ HOLBROOK_TRAVEL_PATTERN = re.compile(
 
 def is_holbrook_team(text):
     return bool(HOLBROOK_TRAVEL_PATTERN.match(text.strip()))
+
+def is_opponent(text):
+    t = text.strip().upper()
+    t = re.sub(r"\(.*?\)", "", t)  # remove (Green), (Blue), etc.
+    t = t.replace("–", "-").replace("—", "-")
+    t = re.sub(r"\s+", " ", t)
+
+    if t in opponent_crests:
+        return True
+
+    for key in opponent_crests.keys():
+        if t.startswith(key):
+            return True
+
+    return False
 
 def split_teams(name):
     name = name.strip()
@@ -139,6 +157,9 @@ def split_teams(name):
 
     return left, sep, right
 
+def normalize_time(t):
+    return t.replace(" ", "").upper()
+
 # ---------------------------------------------------------
 # DATE FILTERING (THIS WEEK)
 # ---------------------------------------------------------
@@ -148,22 +169,15 @@ this_monday = today - timedelta(days=today.weekday())
 this_sunday = this_monday + timedelta(days=6)
 
 games_by_day = defaultdict(list)
+home_games_by_day = defaultdict(list)
 
 # ---------------------------------------------------------
 # PARSE EVENTS
 # ---------------------------------------------------------
 
-def normalize_time(t):
-    return t.replace(" ", "").upper()
-
 for event in calendar.events:
-    raw_name = event.name or ""
-
-    # Cleaned name for cancellation matching
-    name_clean = raw_name.replace("CANCELLED:", "").replace("(Cancelled)", "").replace("- CANCELLED", "")
-    name_clean = name_clean.strip()
-
-    if "practice" in raw_name.lower():
+    name = event.name or ""
+    if "practice" in name.lower():
         continue
 
     start = to_eastern(event.begin.datetime)
@@ -175,68 +189,54 @@ for event in calendar.events:
     t_norm = normalize_time(time_str)
     date_label = start.strftime("%A, %b %d")
 
-    # ---------------------------------------------------------
-    # FIX: allow cancelled ICS events to parse even if separator missing
-    # ---------------------------------------------------------
-
-    left_raw, sep_raw, right_raw = split_teams(raw_name)
-    is_ics_cancelled = "cancel" in raw_name.lower()
-
-    if not left_raw or not sep_raw or not right_raw:
-        if is_ics_cancelled:
-            left_raw, sep_raw, right_raw = split_teams(name_clean)
-
-        if not left_raw or not sep_raw or not right_raw:
-            continue
-
-    # Parse cleaned name for cancellation matching
-    left, sep, right = split_teams(name_clean)
+    left, sep, right = split_teams(name)
     if not left or not sep or not right:
         continue
 
-    left_is_hay = is_holbrook_team(left_raw)
-    right_is_hay = is_holbrook_team(right_raw)
+    # CLEAN TEAM NAMES BEFORE DETECTION
+    clean_left = re.sub(r"\(.*?\)", "", left).strip()
+    clean_right = re.sub(r"\(.*?\)", "", right).strip()
+
+    clean_left_opp = re.sub(r"\(.*?\)", "", left).strip().upper()
+    clean_right_opp = re.sub(r"\(.*?\)", "", right).strip().upper()
+
+    left_is_hay = is_holbrook_team(left)
+    right_is_hay = is_holbrook_team(right)
 
     if not (left_is_hay or right_is_hay):
         continue
 
-    # HOME/AWAY MUST USE RAW SEPARATOR
-    sep_clean = sep_raw.lower().strip()
-    if sep_clean.startswith("v"):
+    if sep.startswith("v"):
         is_home = left_is_hay
-    elif sep_clean.startswith("@") or sep_clean == "at":
+    else:
         is_home = right_is_hay
-    else:
-        is_home = left_is_hay
 
-    # Determine hay team and opponent
     if left_is_hay:
-        hay_team = left_raw
-        opponent = right_raw
+        hay_team = left
+        opponent = right
     else:
-        hay_team = right_raw
-        opponent = left_raw
+        hay_team = right
+        opponent = left
 
     opponent_clean = opponent.strip().upper()
     crest = get_local_crest(opponent_clean)
 
     # ---------------------------------------------------------
-    # RAW CANCELLATION KEY LOGIC + NORMALIZED TIME
+    # CANCELLATION FLAG (NO FILTERING)
     # ---------------------------------------------------------
 
-    raw_left = left_raw.strip()
-    raw_right = right_raw.strip()
+    raw_left = left.strip()
+    raw_right = right.strip()
 
     key1 = f"{date_label} | {t_norm} | {raw_left} | {raw_right}"
     key2 = f"{date_label} | {t_norm} | {raw_right} | {raw_left}"
 
     is_cancelled = cancellations.get(key1, False) or cancellations.get(key2, False)
 
-    # ---------------------------------------------------------
-
     game = {
         "team": hay_team,
         "opponent": opponent_clean,
+        "opponent_display": ("vs. " + opponent_clean) if is_home else ("@ " + opponent_clean),
         "location": location.strip(),
         "normalized_location": normalize_field_name(location),
         "time": time_str,
@@ -248,6 +248,8 @@ for event in calendar.events:
     }
 
     games_by_day[date_label].append(game)
+    if is_home:
+        home_games_by_day[date_label].append(game)
 
 # ---------------------------------------------------------
 # HTML RENDERING
@@ -291,12 +293,14 @@ def render_game(g, home_or_away):
 
     home_crest_html = (
         f"<img class='crest home-crest' src='{home_crest}'>"
-        if home_crest else "<span class='crest placeholder'></span>"
+        if home_crest
+        else "<span class='crest placeholder'></span>"
     )
 
     away_crest_html = (
         f"<img class='crest away-crest' src='{away_crest}'>"
-        if away_crest else "<span class='crest placeholder'></span>"
+        if away_crest
+        else "<span class='crest placeholder'></span>"
     )
 
     loc_slug = re.sub(r'[^a-z0-9]+', '-', g['normalized_location'].lower()).strip('-')
