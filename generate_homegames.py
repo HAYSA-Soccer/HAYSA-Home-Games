@@ -157,12 +157,13 @@ def normalize_time(t):
     return t.replace(" ", "").upper()
 
 for event in calendar.events:
-    name = event.name or ""
-    # Normalize cancelled ICS titles
-    name_clean = name.replace("CANCELLED:", "").replace("(Cancelled)", "").replace("- CANCELLED", "")
+    raw_name = event.name or ""
+
+    # Cleaned name for cancellation matching
+    name_clean = raw_name.replace("CANCELLED:", "").replace("(Cancelled)", "").replace("- CANCELLED", "")
     name_clean = name_clean.strip()
 
-    if "practice" in name.lower():
+    if "practice" in raw_name.lower():
         continue
 
     start = to_eastern(event.begin.datetime)
@@ -174,23 +175,24 @@ for event in calendar.events:
     t_norm = normalize_time(time_str)
     date_label = start.strftime("%A, %b %d")
 
-    left_raw, sep_raw, right_raw = split_teams(name)
-    left, sep, right = split_teams(name_clean)
-    
-    # Use raw separator for home/away logic
-    sep_clean = sep_raw.lower().strip()
+    # Parse raw separator for home/away
+    left_raw, sep_raw, right_raw = split_teams(raw_name)
+    if not left_raw or not sep_raw or not right_raw:
+        continue
 
+    # Parse cleaned name for cancellation matching
+    left, sep, right = split_teams(name_clean)
     if not left or not sep or not right:
         continue
 
-    left_is_hay = is_holbrook_team(left)
-    right_is_hay = is_holbrook_team(right)
+    left_is_hay = is_holbrook_team(left_raw)
+    right_is_hay = is_holbrook_team(right_raw)
 
     if not (left_is_hay or right_is_hay):
         continue
 
-    # Determine home/away
-    sep_clean = sep.lower().strip()
+    # HOME/AWAY MUST USE RAW SEPARATOR
+    sep_clean = sep_raw.lower().strip()
     if sep_clean.startswith("v"):
         is_home = left_is_hay
     elif sep_clean.startswith("@") or sep_clean == "at":
@@ -200,11 +202,11 @@ for event in calendar.events:
 
     # Determine hay team and opponent
     if left_is_hay:
-        hay_team = left
-        opponent = right
+        hay_team = left_raw
+        opponent = right_raw
     else:
-        hay_team = right
-        opponent = left
+        hay_team = right_raw
+        opponent = left_raw
 
     opponent_clean = opponent.strip().upper()
     crest = get_local_crest(opponent_clean)
@@ -213,8 +215,8 @@ for event in calendar.events:
     # RAW CANCELLATION KEY LOGIC + NORMALIZED TIME
     # ---------------------------------------------------------
 
-    raw_left = left.strip()
-    raw_right = right.strip()
+    raw_left = left_raw.strip()
+    raw_right = right_raw.strip()
 
     key1 = f"{date_label} | {t_norm} | {raw_left} | {raw_right}"
     key2 = f"{date_label} | {t_norm} | {raw_right} | {raw_left}"
