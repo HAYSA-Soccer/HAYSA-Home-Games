@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-01T10:23:25.504336",
+  "generated_at": "2026-06-01T16:40:23.881193",
   "source": "https://www.haysa.org/schedules",
   "cancellations": {
     "Saturday, May 30 | 2:30 PM | WHITMAN-HANSON | 3/4 Boys (Ayers)": {
@@ -19,6 +19,12 @@
       "time": "12:00 PM",
       "home": "BRAINTREE",
       "away": "7/8 Boys (Mills)"
+    },
+    "Saturday, May 30 | 1:30 PM | 7/8 Girls (Lucci-McShain) | WEST BRIDGEWATER": {
+      "date": "Saturday, May 30",
+      "time": "1:30 PM",
+      "home": "7/8 Girls (Lucci-McShain)",
+      "away": "WEST BRIDGEWATER"
     },
     "Saturday, May 30 | 4:30 PM | 9/10 Boys (Forbes) | WHITMAN-HANSON": {
       "date": "Saturday, May 30",
