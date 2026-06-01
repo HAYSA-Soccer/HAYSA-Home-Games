@@ -23,7 +23,6 @@ async def scrape_cancellations():
             href = await link.get_attribute("href")
             text = (await link.text_content() or "").strip()
             if href and "/schedule/" in href.lower():
-                # Make absolute if needed
                 if href.startswith("/"):
                     href = "https://www.haysa.org" + href
                 schedule_links.append((href, text))
@@ -45,71 +44,59 @@ async def scrape_cancellations():
 
                 for row in rows:
                     row_html = (await row.inner_html()) or ""
-                    # Skip header / non-data rows
                     tds = await row.locator("td").all()
                     if len(tds) < 4:
                         continue
 
-                    # Extract text cells
                     date_text = (await tds[0].inner_text() or "").strip()
                     time_text = (await tds[1].inner_text() or "").strip()
                     home_text = (await tds[2].inner_text() or "").strip()
                     away_text = (await tds[3].inner_text() or "").strip()
-                    location_text = (await tds[4].inner_text() or "").strip() if len(tds) > 4 else ""
 
                     if not date_text or not time_text or not home_text or not away_text:
                         continue
 
-                    # Normalize date to something stable (keep as-is for now)
-                    # Example: "Sat 5/30" -> we keep that string; ICS side will need to align
-                    date_norm = date_text
+                    # Detect cancellation via line-through formatting
+                    is_cancelled = "text-decoration: line-through" in row_html.lower()
+                    if not is_cancelled:
+                        continue
+
+                    # Convert "Sat 5/30" → "Saturday, May 30"
+                    date_ics = date_text
+                    try:
+                        parts = date_text.split()
+                        if len(parts) == 2:
+                            _, md = parts
+                            month, day = md.split("/")
+                            month = int(month)
+                            day = int(day)
+
+                            now = datetime.now()
+                            dt = datetime(now.year, month, day)
+                            date_ics = dt.strftime("%A, %b %d")
+                    except Exception as e:
+                        print(f"  Date parse failed for '{date_text}': {e}")
+
+                    date_norm = date_ics
                     time_norm = time_text
                     home_norm = home_text
                     away_norm = away_text
 
-                    # Detect cancellation via line-through formatting
-                    is_cancelled = "text-decoration: line-through" in row_html.lower()
+                    key = f"{date_norm} | {time_norm} | {home_norm} | {away_norm}"
 
-                    if not is_cancelled:
-                        continue  # we only store cancelled games
-
-                    from datetime import datetime
-
-                    # Convert "Sat 5/30" → "Saturday, May 30"
-                    date_ics = date_norm  # fallback
-                    
-                    try:
-                        parts = date_norm.split()
-                        if len(parts) == 2:
-                            dow, md = parts
-                            month, day = md.split("/")
-                            month = int(month)
-                            day = int(day)
-                    
-                            now = datetime.now()
-                            dt = datetime(now.year, month, day)
-                    
-                            date_ics = dt.strftime("%A, %b %d")
-                    except Exception as e:
-                        print(f"  Date parse failed for '{date_norm}': {e}")
-
-                    
-                    key = f"{date_ics} | {time_norm} | {home_norm} | {away_norm}"
-
+                    # Store full game info for reconstruction
                     cancellations[key] = {
-                        "date": date_ics,
+                        "date": date_norm,
                         "time": time_norm,
                         "home": home_norm,
-                        "away": away_norm
+                        "away": away_norm,
                     }
-
 
             except Exception as e:
                 print(f"  Error processing {division}: {e}")
 
         await browser.close()
 
-    # 3) Write cancellations.json in repo root
     stamp = datetime.now().isoformat()
     output = {
         "generated_at": stamp,
