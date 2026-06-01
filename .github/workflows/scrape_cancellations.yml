@@ -3,7 +3,7 @@ name: Scrape HAYSA cancellations
 on:
   schedule:
     - cron: "0 * * * *"      # every hour
-  workflow_dispatch:          # manual trigger
+  workflow_dispatch:
   push:
     paths:
       - "scrape_cancellations.py"
@@ -14,8 +14,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repo with full history
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,11 +38,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if git status --porcelain | grep -q "cancellations.json"; then
+            echo "Changes detected in cancellations.json"
+
             git config user.name "actions-user"
             git config user.email "actions@github.com"
+
             git add cancellations.json
             git commit -m "Auto-update cancellations.json"
-            git push
+
+            echo "Pulling latest changes before pushing..."
+            git pull --rebase origin main
+
+            echo "Pushing updated cancellations.json..."
+            git push origin main
           else
             echo "No changes to cancellations.json"
           fi
