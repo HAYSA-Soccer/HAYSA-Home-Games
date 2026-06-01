@@ -17,6 +17,13 @@ try:
     with open("cancellations.json", "r", encoding="utf-8") as f:
         cancellation_data = json.load(f)
         cancellations = cancellation_data.get("cancellations", {})
+        print("Cancellations keys loaded:", len(cancellations))
+        # Show a couple of sample keys
+        for i, k in enumerate(cancellations.keys()):
+            print("  cancellation key:", k)
+            if i >= 4:
+                break
+
 except FileNotFoundError:
     print("WARNING: cancellations.json not found — assuming no cancellations.")
     cancellations = {}
@@ -176,8 +183,12 @@ for event in calendar.events:
         continue
 
     start = to_eastern(event.begin.datetime)
-    if not (this_monday.date() <= start.date() <= this_sunday.date()):
+    in_window = this_monday.date() <= start.date() <= this_sunday.date()
+    if not in_window:
+        # Debug: show what we're skipping
+        print("SKIP (date):", start.date(), "| name:", event.name)
         continue
+
 
     location = event.location or ""
     time_str = start.strftime("%I:%M %p").lstrip("0")
