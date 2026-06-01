@@ -96,7 +96,13 @@ async def scrape_cancellations():
                     
                     key = f"{date_ics} | {time_norm} | {home_norm} | {away_norm}"
 
-                    cancellations[key] = True
+                    cancellations[key] = {
+                        "date": date_ics,
+                        "time": time_norm,
+                        "home": home_norm,
+                        "away": away_norm
+                    }
+
 
             except Exception as e:
                 print(f"  Error processing {division}: {e}")
