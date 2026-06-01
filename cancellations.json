@@ -1,10 +1,30 @@
 {
-  "generated_at": "2026-05-31T23:03:01.041872",
+  "generated_at": "2026-06-01T01:09:40.479271",
   "source": "https://www.haysa.org/schedules",
   "cancellations": {
-    "Saturday, May 30 | 2:30 PM | WHITMAN-HANSON | 3/4 Boys (Ayers)": true,
-    "Saturday, May 30 | 3:45 PM | BRIDGEWATER | 3/4 Girls (Mills)": true,
-    "Saturday, May 30 | 12:00 PM | BRAINTREE | 7/8 Boys (Mills)": true,
-    "Saturday, May 30 | 4:30 PM | 9/10 Boys (Forbes) | WHITMAN-HANSON": true
+    "Saturday, May 30 | 2:30 PM | WHITMAN-HANSON | 3/4 Boys (Ayers)": {
+      "date": "Saturday, May 30",
+      "time": "2:30 PM",
+      "home": "WHITMAN-HANSON",
+      "away": "3/4 Boys (Ayers)"
+    },
+    "Saturday, May 30 | 3:45 PM | BRIDGEWATER | 3/4 Girls (Mills)": {
+      "date": "Saturday, May 30",
+      "time": "3:45 PM",
+      "home": "BRIDGEWATER",
+      "away": "3/4 Girls (Mills)"
+    },
+    "Saturday, May 30 | 12:00 PM | BRAINTREE | 7/8 Boys (Mills)": {
+      "date": "Saturday, May 30",
+      "time": "12:00 PM",
+      "home": "BRAINTREE",
+      "away": "7/8 Boys (Mills)"
+    },
+    "Saturday, May 30 | 4:30 PM | 9/10 Boys (Forbes) | WHITMAN-HANSON": {
+      "date": "Saturday, May 30",
+      "time": "4:30 PM",
+      "home": "9/10 Boys (Forbes)",
+      "away": "WHITMAN-HANSON"
+    }
   }
 }
