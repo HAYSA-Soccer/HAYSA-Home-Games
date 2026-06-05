@@ -2,20 +2,23 @@ name: Update Home Games
 
 on:
   schedule:
-    - cron: '0 11 * * *'   # daily at 11:00 UTC
+    - cron: '0 11 * * *'
   workflow_dispatch:
   push:
     paths:
-      - "cancellations.json"     # <— TRIGGER when cancellations.json changes
-      - "generate_homegames.py"  # also rebuild if generator changes
+      - "cancellations.json"
+      - "generate_homegames.py"
       - ".github/workflows/update-home-games.yml"
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo with full history
+      - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -30,6 +33,9 @@ jobs:
           pip install -r requirements.txt || true
           pip install ics pytz requests
 
+      - name: Pull latest changes
+        run: git pull origin main --rebase
+
       - name: Run Python script
         run: python generate_homegames.py
 
@@ -42,9 +48,6 @@ jobs:
         run: |
           git add home.html all_games.html ics_dump.txt || true
           git diff --cached --quiet || git commit -m "Auto-update home games for $(date +'%Y-%m-%d')"
-
-      - name: Pull latest changes
-        run: git pull origin main --rebase
 
       - name: Push changes
         run: git push origin main
