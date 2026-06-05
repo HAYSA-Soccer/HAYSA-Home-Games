@@ -129,17 +129,6 @@ body {
   object-fit: contain;
 }
 
-/* ============================================================
-   COMPLETE COLUMN MAPPING FOR AWAY GAMES
-   ============================================================ */
-.game.away .time       { grid-column: 1; }
-.game.away .away-crest { grid-column: 2; }
-.game.away .away-team  { grid-column: 3; }
-.game.away .opponent   { grid-column: 4; }
-.game.away .home-crest { grid-column: 5; }
-.game.away .home-team  { grid-column: 6; }
-.game.away .location   { grid-column: 7; }
-
 
 /* ============================================================
    NO GAMES MESSAGE
@@ -217,6 +206,16 @@ body {
     vertical-align: middle;
   }
 }
+
+/* Explicit column placement for all rows */
+.game .time        { grid-column: 1; }
+.game .home-crest  { grid-column: 2; }
+.game .home-team   { grid-column: 3; }
+.game .opponent    { grid-column: 4; }
+.game .away-crest  { grid-column: 5; }
+.game .away-team   { grid-column: 6; }
+.game .location    { grid-column: 7; }
+
 
 /* ============================================================
    CANCELLED GAME STYLING
