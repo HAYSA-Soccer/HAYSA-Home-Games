@@ -339,16 +339,12 @@ def html_footer():
 """
 
 def render_game(g, home_or_away):
-    if g["is_home"]:
-        home_team = g["team"]
-        home_crest = hayasa_crest
-        away_team = g["opponent"]
-        away_crest = g["crest"]
-    else:
-        home_team = g["opponent"]
-        home_crest = g["crest"]
-        away_team = g["team"]
-        away_crest = hayasa_crest
+    # Holbrook is ALWAYS the "home" side in the HTML grid
+    home_team = g["team"]
+    home_crest = hayasa_crest
+
+    away_team = g["opponent"]
+    away_crest = g["crest"]
 
     home_crest_html = (
         f"<img class='crest home-crest' src='{home_crest}'>"
