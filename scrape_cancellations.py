@@ -60,19 +60,18 @@ async def scrape_cancellations():
                     # Detect cancellation via line-through formatting
                     is_cancelled = "text-decoration: line-through" in row_html.lower()
 
-                    # Detect forfeits via score columns
-                    score_home = ""
-                    score_away = ""
-
-                    if len(tds) > 4:
-                        score_home = (await tds[4].inner_text() or "").strip().lower()
-                    if len(tds) > 5:
-                        score_away = (await tds[5].inner_text() or "").strip().lower()
+                    # Detect forfeits by scanning ALL remaining columns
+                    score_cells = []
+                    for i in range(4, len(tds)):
+                        text = (await tds[i].inner_text() or "").strip().lower()
+                        score_cells.append(text)
 
                     forfeit_keywords = ["forfeit", "ff", "f/f", "w/f", "l/f"]
 
-                    is_forfeit = any(k in score_home for k in forfeit_keywords) or \
-                                 any(k in score_away for k in forfeit_keywords)
+                    is_forfeit = any(
+                        any(k in cell for k in forfeit_keywords)
+                        for cell in score_cells
+                    )
 
                     # Skip if neither cancelled nor forfeited
                     if not (is_cancelled or is_forfeit):
@@ -102,8 +101,7 @@ async def scrape_cancellations():
                         "home": home_text,
                         "away": away_text,
                         "type": "forfeit" if is_forfeit else "cancelled",
-                        "score_home": score_home,
-                        "score_away": score_away,
+                        "score_cells": score_cells,
                         "raw_html": row_html,
                     }
 
