@@ -9,6 +9,15 @@ import pytz
 import csv
 from io import StringIO
 
+
+
+def strip_score_suffix(name):
+    """
+    Removes trailing W/L from team names so cancellation keys
+    match ICS keys exactly.
+    """
+    return re.sub(r"\s*[WL]\s*$", "", name.strip(), flags=re.IGNORECASE)
+
 # ---------------------------------------------------------
 # LOAD CANCELLATIONS
 # ---------------------------------------------------------
