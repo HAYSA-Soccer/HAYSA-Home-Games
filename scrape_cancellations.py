@@ -29,7 +29,7 @@ async def scrape_cancellations():
 
         print(f"Found {len(schedule_links)} schedule links")
 
-        # 2) Visit each division page and detect cancelled games
+        # 2) Visit each division page and detect cancelled/forfeit games
         for url, division in schedule_links:
             print(f"Processing: {division} -> {url}")
             try:
@@ -48,6 +48,7 @@ async def scrape_cancellations():
                     if len(tds) < 4:
                         continue
 
+                    # Extract base fields
                     date_text = (await tds[0].inner_text() or "").strip()
                     time_text = (await tds[1].inner_text() or "").strip()
                     home_text = (await tds[2].inner_text() or "").strip()
@@ -58,11 +59,27 @@ async def scrape_cancellations():
 
                     # Detect cancellation via line-through formatting
                     is_cancelled = "text-decoration: line-through" in row_html.lower()
-                    if not is_cancelled:
+
+                    # Detect forfeits via score columns
+                    score_home = ""
+                    score_away = ""
+
+                    if len(tds) > 4:
+                        score_home = (await tds[4].inner_text() or "").strip().lower()
+                    if len(tds) > 5:
+                        score_away = (await tds[5].inner_text() or "").strip().lower()
+
+                    forfeit_keywords = ["forfeit", "ff", "f/f", "w/f", "l/f"]
+
+                    is_forfeit = any(k in score_home for k in forfeit_keywords) or \
+                                 any(k in score_away for k in forfeit_keywords)
+
+                    # Skip if neither cancelled nor forfeited
+                    if not (is_cancelled or is_forfeit):
                         continue
 
                     # Convert "Sat 5/30" → "Saturday, May 30"
-                    date_ics = date_text
+                    date_norm = date_text
                     try:
                         parts = date_text.split()
                         if len(parts) == 2:
@@ -73,23 +90,21 @@ async def scrape_cancellations():
 
                             now = datetime.now()
                             dt = datetime(now.year, month, day)
-                            date_ics = dt.strftime("%A, %b %d")
+                            date_norm = dt.strftime("%A, %b %d")
                     except Exception as e:
                         print(f"  Date parse failed for '{date_text}': {e}")
 
-                    date_norm = date_ics
-                    time_norm = time_text
-                    home_norm = home_text
-                    away_norm = away_text
+                    key = f"{date_norm} | {time_text} | {home_text} | {away_text}"
 
-                    key = f"{date_norm} | {time_norm} | {home_norm} | {away_norm}"
-
-                    # Store full game info for reconstruction
                     cancellations[key] = {
                         "date": date_norm,
-                        "time": time_norm,
-                        "home": home_norm,
-                        "away": away_norm,
+                        "time": time_text,
+                        "home": home_text,
+                        "away": away_text,
+                        "type": "forfeit" if is_forfeit else "cancelled",
+                        "score_home": score_home,
+                        "score_away": score_away,
+                        "raw_html": row_html,
                     }
 
             except Exception as e:
@@ -107,7 +122,7 @@ async def scrape_cancellations():
     with open("cancellations.json", "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print(f"Written cancellations.json with {len(cancellations)} cancelled games")
+    print(f"Written cancellations.json with {len(cancellations)} cancelled/forfeit games")
 
 
 if __name__ == "__main__":
