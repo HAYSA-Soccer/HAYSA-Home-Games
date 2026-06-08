@@ -255,8 +255,21 @@ for event in calendar.events:
 for key, info in cancellations.items():
     # If ICS already has this game, just mark it cancelled
     if key in ics_games:
-        ics_games[key]["cancelled"] = True
-        continue
+    game = ics_games[key]
+    game["cancelled"] = True
+
+    # ALSO update the version stored in games_by_day
+    for g in games_by_day.get(info["date"], []):
+        # Same date AND same time AND same teams (order doesn't matter)
+        if g["time"] == info["time"]:
+            if (
+                strip_score_suffix(g["team"]) in [info["home"], info["away"]] or
+                strip_score_suffix(g["opponent"]) in [info["home"], info["away"]]
+            ):
+                g["cancelled"] = True
+
+    continue
+
 
     # Otherwise, reconstruct the cancelled game
     date_label = info["date"]
