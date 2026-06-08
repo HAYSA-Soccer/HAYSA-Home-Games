@@ -1,11 +1,30 @@
 import asyncio
 import json
+import re
 from datetime import datetime
-
 from playwright.async_api import async_playwright
 
 BASE_URL = "https://www.haysa.org/schedules"
 
+# ---------------------------------------------------------
+# HELPERS
+# ---------------------------------------------------------
+
+def strip_score_suffix(name):
+    """
+    Removes trailing W/L from team names so cancellation keys
+    match ICS keys exactly.
+    """
+    return re.sub(r"\s*[WL]\s*$", "", name.strip(), flags=re.IGNORECASE)
+
+
+def is_number(s):
+    return s.isdigit()
+
+
+# ---------------------------------------------------------
+# MAIN SCRAPER
+# ---------------------------------------------------------
 
 async def scrape_cancellations():
     cancellations = {}
@@ -14,11 +33,12 @@ async def scrape_cancellations():
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
 
-        # Load schedules index and collect division links
+        # Load schedules index
         await page.goto(BASE_URL, wait_until="networkidle")
 
         links = await page.locator('#SchedulesPageLayout a').all()
         schedule_links = []
+
         for link in links:
             href = await link.get_attribute("href")
             text = (await link.text_content() or "").strip()
@@ -29,13 +49,14 @@ async def scrape_cancellations():
 
         print(f"Found {len(schedule_links)} schedule links")
 
-        # Visit each division page
+        # Process each division page
         for url, division in schedule_links:
             print(f"Processing: {division} -> {url}")
+
             try:
                 await page.goto(url, wait_until="networkidle")
 
-                # Scrape BOTH grids: desktop + mobile
+                # Scrape BOTH grids
                 tables = await page.locator(
                     "table[id*='ScheduleGrid'], table[id*='MobileScheduleGrid']"
                 ).all()
@@ -50,47 +71,39 @@ async def scrape_cancellations():
                     for row in rows:
                         row_html = (await row.inner_html()) or ""
                         tds = await row.locator("td").all()
+
                         if len(tds) < 4:
                             continue
 
-                        # Extract base fields
+                        # Extract fields
                         date_text = (await tds[0].inner_text() or "").strip()
                         time_text = (await tds[1].inner_text() or "").strip()
-                        home_text = (await tds[2].inner_text() or "").strip()
-                        away_text = (await tds[3].inner_text() or "").strip()
+
+                        raw_home = (await tds[2].inner_text() or "")
+                        raw_away = (await tds[3].inner_text() or "")
+
+                        # Normalize team names (strip W/L)
+                        home_text = strip_score_suffix(raw_home)
+                        away_text = strip_score_suffix(raw_away)
 
                         if not date_text or not time_text or not home_text or not away_text:
                             continue
 
-                        # Detect cancellation via line-through formatting
+                        # Detect cancellation (line-through)
                         is_cancelled = "text-decoration: line-through" in row_html.lower()
 
-                        # Extract score values (raw text)
-                        # Desktop grid: score is in separate spans
-                        # Mobile grid: score is appended after team name
-                        home_score = ""
-                        away_score = ""
-
-                        # Try to extract score spans if present
+                        # Extract score spans
                         try:
-                            home_score = (await tds[2].locator("span[id*='HomeScore']").inner_text() or "").strip()
+                            home_score = (await tds[2].locator("span[id*='HomeScore']").inner_text() or "").strip().upper()
                         except:
-                            pass
+                            home_score = ""
 
                         try:
-                            away_score = (await tds[3].locator("span[id*='AwayScore']").inner_text() or "").strip()
+                            away_score = (await tds[3].locator("span[id*='AwayScore']").inner_text() or "").strip().upper()
                         except:
-                            pass
+                            away_score = ""
 
-                        # Normalize
-                        home_score = home_score.upper()
-                        away_score = away_score.upper()
-
-                        # Forfeit rule:
-                        # A forfeit ALWAYS has W/L and NEVER numbers
-                        def is_number(s):
-                            return s.isdigit()
-
+                        # Forfeit rule: BOTH scores must be W/L and NOT numbers
                         is_forfeit = (
                             home_score in ["W", "L"] and
                             away_score in ["W", "L"] and
@@ -102,22 +115,20 @@ async def scrape_cancellations():
                         if not (is_cancelled or is_forfeit):
                             continue
 
-                        # Convert "Sat 5/30" → "Saturday, May 30"
+                        # Normalize date
                         date_norm = date_text
                         try:
                             parts = date_text.split()
                             if len(parts) == 2:
                                 _, md = parts
                                 month, day = md.split("/")
-                                month = int(month)
-                                day = int(day)
-
                                 now = datetime.now()
-                                dt = datetime(now.year, month, day)
+                                dt = datetime(now.year, int(month), int(day))
                                 date_norm = dt.strftime("%A, %b %d")
                         except:
                             pass
 
+                        # Build clean key (matches ICS)
                         key = f"{date_norm} | {time_text} | {home_text} | {away_text}"
 
                         cancellations[key] = {
@@ -136,6 +147,7 @@ async def scrape_cancellations():
 
         await browser.close()
 
+    # Write output
     stamp = datetime.now().isoformat()
     output = {
         "generated_at": stamp,
