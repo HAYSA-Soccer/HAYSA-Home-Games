@@ -14,7 +14,7 @@ async def scrape_cancellations():
         browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
 
-        # 1) Load schedules index and collect division links
+        # Load schedules index and collect division links
         await page.goto(BASE_URL, wait_until="networkidle")
 
         links = await page.locator('#SchedulesPageLayout a').all()
@@ -29,14 +29,11 @@ async def scrape_cancellations():
 
         print(f"Found {len(schedule_links)} schedule links")
 
-        # 2) Visit each division page and detect cancelled/forfeit games
+        # Visit each division page
         for url, division in schedule_links:
             print(f"Processing: {division} -> {url}")
             try:
                 await page.goto(url, wait_until="networkidle")
-
-                # Wait for TeamSideline JS to finish rendering (critical)
-                await page.wait_for_timeout(1500)
 
                 # Scrape BOTH grids: desktop + mobile
                 tables = await page.locator(
@@ -68,17 +65,37 @@ async def scrape_cancellations():
                         # Detect cancellation via line-through formatting
                         is_cancelled = "text-decoration: line-through" in row_html.lower()
 
-                        # Detect forfeits by scanning ALL remaining columns (HTML)
-                        score_cells = []
-                        for i in range(4, len(tds)):
-                            html = (await tds[i].inner_html() or "").lower()
-                            score_cells.append(html)
+                        # Extract score values (raw text)
+                        # Desktop grid: score is in separate spans
+                        # Mobile grid: score is appended after team name
+                        home_score = ""
+                        away_score = ""
 
-                        forfeit_keywords = ["forfeit", "ff", "f/f", "w/f", "l/f"]
+                        # Try to extract score spans if present
+                        try:
+                            home_score = (await tds[2].locator("span[id*='HomeScore']").inner_text() or "").strip()
+                        except:
+                            pass
 
-                        is_forfeit = any(
-                            any(k in cell for k in forfeit_keywords)
-                            for cell in score_cells
+                        try:
+                            away_score = (await tds[3].locator("span[id*='AwayScore']").inner_text() or "").strip()
+                        except:
+                            pass
+
+                        # Normalize
+                        home_score = home_score.upper()
+                        away_score = away_score.upper()
+
+                        # Forfeit rule:
+                        # A forfeit ALWAYS has W/L and NEVER numbers
+                        def is_number(s):
+                            return s.isdigit()
+
+                        is_forfeit = (
+                            home_score in ["W", "L"] and
+                            away_score in ["W", "L"] and
+                            not is_number(home_score) and
+                            not is_number(away_score)
                         )
 
                         # Skip if neither cancelled nor forfeited
@@ -98,8 +115,8 @@ async def scrape_cancellations():
                                 now = datetime.now()
                                 dt = datetime(now.year, month, day)
                                 date_norm = dt.strftime("%A, %b %d")
-                        except Exception as e:
-                            print(f"  Date parse failed for '{date_text}': {e}")
+                        except:
+                            pass
 
                         key = f"{date_norm} | {time_text} | {home_text} | {away_text}"
 
@@ -109,7 +126,8 @@ async def scrape_cancellations():
                             "home": home_text,
                             "away": away_text,
                             "type": "forfeit" if is_forfeit else "cancelled",
-                            "score_cells": score_cells,
+                            "home_score": home_score,
+                            "away_score": away_score,
                             "raw_html": row_html,
                         }
 
