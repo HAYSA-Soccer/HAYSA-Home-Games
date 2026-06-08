@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-06-08T17:44:42.368164",
+  "generated_at": "2026-06-08T17:55:43.041677",
   "source": "https://www.haysa.org/schedules",
   "cancellations": {
-    "Friday, May 15 | 8:00 PM | 11/12/PG Girls Travel (Green)\nL | HULL\nW": {
+    "Friday, May 15 | 8:00 PM | 11/12/PG Girls Travel (Green) | HULL": {
       "date": "Friday, May 15",
       "time": "8:00 PM",
-      "home": "11/12/PG Girls Travel (Green)\nL",
-      "away": "HULL\nW",
+      "home": "11/12/PG Girls Travel (Green)",
+      "away": "HULL",
       "type": "forfeit",
       "home_score": "L",
       "away_score": "W",
@@ -22,11 +22,11 @@
       "away_score": "",
       "raw_html": "\n\t\t\t\t\t\t<td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl57_DateLabel\" class=\"dateLabelSchedule\" style=\"text-decoration: line-through;\">Sat 5/30</span>\n                            </td><td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl57_TimeLabel\" style=\"text-decoration: line-through;\">2:30 PM</span>\n                            </td><td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <div style=\"float: left;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl57_HomeLabel\" style=\"text-decoration: line-through;\">WHITMAN-HANSON</span>\n                                </div>\n                                <div style=\"float: left;\">\n                                    \n                                    \n                                </div>\n                                <div style=\"float: right;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl57_HomeScoreLabel\"></span>\n                                </div>\n                            </td><td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <div style=\"float: left;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl57_AwayLabel\" style=\"text-decoration: line-through;\">3/4 Boys (Ayers)</span>\n                                </div>\n                                <div style=\"float: right;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl57_AwayScoreLabel\"></span>\n                                </div>\n                            </td><td align=\"left\" valign=\"top\" style=\"width:115px;\" role=\"gridcell\">\n                                <a id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl57_LocationLink\" class=\"standingResultsLocationLink\" target=\"_blank\" style=\"text-decoration:none;\"><span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl57_ScheduleLabel\" style=\"text-decoration: line-through;\">HAN-7A</span></a>\n                            </td>\n\t\t\t\t\t"
     },
-    "Saturday, May 30 | 3:45 PM | ACUSHNET\nW | 3/4 Girls (Picardi)\nL": {
+    "Saturday, May 30 | 3:45 PM | ACUSHNET | 3/4 Girls (Picardi)": {
       "date": "Saturday, May 30",
       "time": "3:45 PM",
-      "home": "ACUSHNET\nW",
-      "away": "3/4 Girls (Picardi)\nL",
+      "home": "ACUSHNET",
+      "away": "3/4 Girls (Picardi)",
       "type": "forfeit",
       "home_score": "W",
       "away_score": "L",
@@ -72,11 +72,11 @@
       "away_score": "",
       "raw_html": "\n\t\t\t\t\t\t<td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl63_DateLabel\" class=\"dateLabelSchedule\" style=\"text-decoration: line-through;\">Sat 5/30</span>\n                            </td><td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl63_TimeLabel\" style=\"text-decoration: line-through;\">4:30 PM</span>\n                            </td><td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <div style=\"float: left;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl63_HomeLabel\" style=\"text-decoration: line-through;\">9/10 Boys (Forbes)</span>\n                                </div>\n                                <div style=\"float: left;\">\n                                    \n                                    \n                                </div>\n                                <div style=\"float: right;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl63_HomeScoreLabel\"></span>\n                                </div>\n                            </td><td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <div style=\"float: left;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl63_AwayLabel\" style=\"text-decoration: line-through;\">WHITMAN-HANSON</span>\n                                </div>\n                                <div style=\"float: right;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl63_AwayScoreLabel\"></span>\n                                </div>\n                            </td><td align=\"left\" valign=\"top\" style=\"width:115px;\" role=\"gridcell\">\n                                <a id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl63_LocationLink\" class=\"standingResultsLocationLink\" target=\"_blank\" style=\"text-decoration:none;\"><span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl63_ScheduleLabel\" style=\"text-decoration: line-through;\">H-HST</span></a>\n                            </td>\n\t\t\t\t\t"
     },
-    "Tuesday, Jun 09 | 6:00 PM | 9/10 Boys (Forbes)\nW | WEYMOUTH\nL": {
+    "Tuesday, Jun 09 | 6:00 PM | 9/10 Boys (Forbes) | WEYMOUTH": {
       "date": "Tuesday, Jun 09",
       "time": "6:00 PM",
-      "home": "9/10 Boys (Forbes)\nW",
-      "away": "WEYMOUTH\nL",
+      "home": "9/10 Boys (Forbes)",
+      "away": "WEYMOUTH",
       "type": "forfeit",
       "home_score": "W",
       "away_score": "L",
