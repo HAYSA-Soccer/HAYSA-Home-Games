@@ -140,21 +140,15 @@ HOLBROOK_TRAVEL_PATTERN = re.compile(
 def is_holbrook_team(text):
     t = text.strip()
 
-    # First: does it match the travel pattern at all?
-    if not HOLBROOK_TRAVEL_PATTERN.match(t):
+    # Reject ANYTHING with "team" or "recteam"
+    if re.search(r"\bteam\b", t, re.IGNORECASE):
+        return False
+    if re.search(r"recteam", t, re.IGNORECASE):
         return False
 
-    # Second: reject rec teams like "3/4 Girls Team 1"
-    # We only reject if "team" appears AFTER the travel prefix.
-    # Example travel prefix: "3/4 Girls"
-    m = HOLBROOK_TRAVEL_PATTERN.match(t)
-    travel_prefix_end = m.end()  # index where the travel portion ends
+    # Now apply your travel regex
+    return bool(HOLBROOK_TRAVEL_PATTERN.match(t))
 
-    # Look for "team" AFTER that index
-    if re.search(r"\bteam\b", t[travel_prefix_end:], re.IGNORECASE):
-        return False
-
-    return True
 
 
 def is_opponent(text):
