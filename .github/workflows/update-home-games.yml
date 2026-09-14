@@ -2,7 +2,7 @@ name: Update Home Games
 
 on:
   schedule:
-    - cron: '0 11 * * *'
+    - cron: '0 8 * * *'
   workflow_dispatch:
   push:
     paths:
