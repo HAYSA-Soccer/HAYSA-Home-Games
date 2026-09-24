@@ -193,6 +193,7 @@ games_by_day = defaultdict(list)
 home_games_by_day = defaultdict(list)
 ics_games = {}  # key -> game
 
+
 # ---------------------------------------------------------
 # PARSE ICS EVENTS
 # ---------------------------------------------------------
@@ -205,12 +206,12 @@ for event in calendar.events:
     start = to_eastern(event.begin.datetime)
     in_window = this_monday.date() <= start.date() <= this_sunday.date()
     if not in_window:
-        # Debug: show what we're skipping
         print("SKIP (date):", start.date(), "| name:", event.name)
         continue
 
-
     location = event.location or ""
+    loc_upper = location.upper()
+
     time_str = start.strftime("%I:%M %p").lstrip("0")
     date_label = start.strftime("%A, %b %d")
 
@@ -227,10 +228,40 @@ for event in calendar.events:
     if not (left_is_hay or right_is_hay):
         continue
 
-    if sep.startswith("v"):
-        is_home = left_is_hay
+    # ---------------------------------------------------------
+    # LOCATION-BASED HOME/AWAY OVERRIDE
+    # ---------------------------------------------------------
+
+    home_field_keywords = [
+        "H-HST", "HOLBROOK HIGH SCHOOL", "HOLBROOK HS",
+        "SEAN JOYCE", "H-SJ", "AVON BUTLER", "A-BU1",
+        "BROOKVILLE"
+    ]
+
+    away_field_keywords = [
+        "STO-", "STOUGHTON",
+        "RAY-", "RAYNHAM",
+        "SHA-", "SHARON",
+        "WEYMOUTH", "WEY-",
+        "EB-", "EAST BRIDGEWATER",
+        "MMR", "MANSFIELD",
+    ]
+
+    # LOCATION OVERRIDES SUMMARY
+    if any(k in loc_upper for k in home_field_keywords):
+        is_home = True
+    elif any(k in loc_upper for k in away_field_keywords):
+        is_home = False
     else:
-        is_home = right_is_hay
+        # FALL BACK TO SUMMARY LOGIC
+        if sep.startswith("v"):
+            is_home = left_is_hay
+        else:
+            is_home = right_is_hay
+
+    # ---------------------------------------------------------
+    # TEAM ASSIGNMENT
+    # ---------------------------------------------------------
 
     if left_is_hay:
         hay_team = left
@@ -260,13 +291,13 @@ for event in calendar.events:
     if is_home:
         home_games_by_day[date_label].append(game)
 
-    # Index ICS games by both orders for cancellation matching
     raw_left = left.strip()
     raw_right = right.strip()
     key1 = f"{date_label} | {time_str} | {raw_left} | {raw_right}"
     key2 = f"{date_label} | {time_str} | {raw_right} | {raw_left}"
     ics_games[key1] = game
     ics_games[key2] = game
+
 
 # ---------------------------------------------------------
 # MERGE CANCELLATIONS (MARK OR RECONSTRUCT)
