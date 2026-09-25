@@ -345,12 +345,17 @@ for key, info in cancellations.items():
 
     # Reconstruct datetime and filter to this week
     try:
-        dt = datetime.strptime
-            (f"{date_label} {time_str}", 
-             "%A, %b %d %Y %I:%M %p"
+        dt = datetime.strptime(
+            f"{date_label} {today.year} {time_str}",
+            "%A, %b %d %Y %I:%M %p"
         )
         dt = pytz.timezone("US/Eastern").localize(dt)
-    except Exception:
+         
+        if "Osward" in key:
+            print("OSWARD RECONSTRUCTED DT:", dt)
+     
+    except Exception as e:
+        print("RECONSTRUCTION ERROR:", e)
         continue
 
     if not (this_monday.date() <= dt.date() <= this_sunday.date()):
