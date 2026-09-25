@@ -350,7 +350,6 @@ for key, info in cancellations.items():
             "%A, %b %d %Y %I:%M %p"
         )
         dt = pytz.timezone("US/Eastern").localize(dt)
-         
         if "Osward" in key:
             print("OSWARD RECONSTRUCTED DT:", dt)
      
