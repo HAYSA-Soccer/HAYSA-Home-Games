@@ -288,6 +288,11 @@ for event in calendar.events:
     }
 
     games_by_day[date_label].append(game)
+    
+    print(
+        f"ADDED GAME: {date_label} | {hay_team} | {opponent} | {location}"
+    )
+    
     if is_home:
         home_games_by_day[date_label].append(game)
 
