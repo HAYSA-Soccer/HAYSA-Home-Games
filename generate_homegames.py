@@ -335,7 +335,7 @@ for key, info in cancellations.items():
         continue
 
     # Otherwise, reconstruct the cancelled game
-        if "Osward" in key:
+    if "Osward" in key:
         print("OSWARD RECONSTRUCTION")
 
     date_label = info["date"]
