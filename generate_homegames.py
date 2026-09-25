@@ -310,8 +310,15 @@ for event in calendar.events:
 
 for key, info in cancellations.items():
 
+    if "Osward" in key:
+        print("OSWARD CANCELLATION FOUND:", key)
+
     # If ICS already has this game, just mark it cancelled
     if key in ics_games:
+
+        if "Osward" in key:
+            print("OSWARD MATCHED ICS")
+
         game = ics_games[key]
         game["cancelled"] = True
 
@@ -328,6 +335,9 @@ for key, info in cancellations.items():
         continue
 
     # Otherwise, reconstruct the cancelled game
+        if "Osward" in key:
+        print("OSWARD RECONSTRUCTION")
+
     date_label = info["date"]
     time_str = info["time"]
     home = info["home"]
