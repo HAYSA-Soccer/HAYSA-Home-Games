@@ -352,7 +352,7 @@ for key, info in cancellations.items():
         dt = pytz.timezone("US/Eastern").localize(dt)
         if "Osward" in key:
             print("OSWARD RECONSTRUCTED DT:", dt)
-     
+            
     except Exception as e:
         print("RECONSTRUCTION ERROR:", e)
         continue
