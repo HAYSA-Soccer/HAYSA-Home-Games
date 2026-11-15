@@ -1,5 +1,16 @@
 {
-  "generated_at": "2026-11-15T16:08:49.707318",
+  "generated_at": "2026-11-15T21:30:04.579879",
   "source": "https://www.haysa.org/schedules",
-  "cancellations": {}
+  "cancellations": {
+    "Saturday, Sep 26 | 12:30 PM | Raynham | 7/8 Boys Travel (Mills)": {
+      "date": "Saturday, Sep 26",
+      "time": "12:30 PM",
+      "home": "Raynham",
+      "away": "7/8 Boys Travel (Mills)",
+      "type": "cancelled",
+      "home_score": "",
+      "away_score": "",
+      "raw_html": "\n\t\t\t\t\t\t<td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl19_DateLabel\" class=\"dateLabelSchedule\" style=\"text-decoration: line-through;\">Sat 9/26</span>\n                            </td><td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl19_TimeLabel\" style=\"text-decoration: line-through;\">12:30 PM</span>\n                            </td><td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <div style=\"float: left;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl19_HomeLabel\" style=\"text-decoration: line-through;\">Raynham</span>\n                                </div>\n                                <div style=\"float: left;\">\n                                    \n                                    \n                                </div>\n                                <div style=\"float: right;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl19_HomeScoreLabel\"></span>\n                                </div>\n                            </td><td align=\"left\" valign=\"top\" role=\"gridcell\">\n                                <div style=\"float: left;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl19_AwayLabel\" style=\"text-decoration: line-through;\">7/8 Boys Travel (Mills)</span>\n                                </div>\n                                <div style=\"float: right;\">\n                                    <span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl19_AwayScoreLabel\"></span>\n                                </div>\n                            </td><td align=\"left\" valign=\"top\" style=\"width:115px;\" role=\"gridcell\">\n                                <a id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl19_LocationLink\" class=\"standingResultsLocationLink\" target=\"_blank\" style=\"text-decoration:none;\"><span id=\"ctl00_ContentPlaceHolder1_StandingsResultsControl_ScheduleGrid_ctl00_ctl19_ScheduleLabel\" style=\"text-decoration: line-through;\">RAY-11</span></a>\n                            </td>\n\t\t\t\t\t"
+    }
+  }
 }
